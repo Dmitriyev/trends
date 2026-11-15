@@ -47,9 +47,10 @@ export async function onRequestPost({ request, env }) {
   }
   for (const event of data.events) {
     if (!event || !validId(event.id) || !integer(event.at, data.startedAt, now + 60000) ||
-        !['outbound_click', 'video_view', 'player_open_3s'].includes(event.kind) ||
+        !['outbound_click', 'video_view', 'player_open_3s', 'pagination_seen', 'pagination_clicked'].includes(event.kind) ||
         typeof event.domain !== 'string' || event.domain.length > 253 || !hostname.test(event.domain) ||
         typeof event.video !== 'string' || event.video.length > 160 ||
+        (event.kind.startsWith('pagination_') && (event.domain !== 'trends.local' || !/^(home|tiktok|instagram|youtube|trends):[1-9][0-9]*$/.test(event.video))) ||
         (event.kind === 'video_view' && !/^(youtube\.com|tiktok\.com):[\w-]+$/.test(event.video)) ||
         (event.kind === 'player_open_3s' && (
           !['youtube.com', 'tiktok.com', 'instagram.com'].includes(event.domain) ||

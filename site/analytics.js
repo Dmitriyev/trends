@@ -76,6 +76,8 @@
     };
     activeSince = now;
     dirty = true;
+    paginationSeen.clear();
+    paginationClicked.clear();
     for (const element of candidates.keys()) candidates.set(element, performance.now());
     persist();
     return true;
@@ -179,10 +181,10 @@
   root.addEventListener('click', event => {
     if (!event.target.closest('.more')) return;
     interacted();
+    paginationEvent('pagination_clicked', event.target.closest('.more'));
     if (session.depthAtClick !== null) return;
     collectVisible(true);
     session.moreSeen = true;
-    paginationEvent('pagination_clicked', event.target.closest('.more'));
     session.depthAtClick = session.seen.size;
     flush(true);
   }, { capture: true });

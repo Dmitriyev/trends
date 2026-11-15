@@ -48,6 +48,9 @@ export async function onRequestGet({ request, env }) {
 
   const params = new URL(request.url).searchParams;
   const retention = params.get('view') === 'retention';
+  const selectedDevice = params.get('device');
+  const device = ['mobile', 'desktop', 'unknown'].includes(selectedDevice) ? selectedDevice : 'all';
+  const deviceFilter = column => `(? = 'all' OR ${column} = ?)`;
   const days = [7, 30, 90].includes(Number(params.get('days'))) ? Number(params.get('days')) : 30;
   const today = todayInMoscow(Date.now());
   const cutoff = startOfDay(today) - (days - 1) * dayMs;
@@ -58,7 +61,7 @@ export async function onRequestGet({ request, env }) {
       WITH eligible AS (
         SELECT id, first_at, ${week('first_at')} AS cohort
         FROM visitors
-        WHERE first_at >= ?
+        WHERE first_at >= ? AND ${deviceFilter('device')}
       ), matured AS (
         SELECT * FROM eligible
         WHERE datetime(cohort, '+20 days', '-3 hours') <= datetime('now')
@@ -70,8 +73,8 @@ export async function onRequestGet({ request, env }) {
           AND started_at < first_at + 14 * 86400000
       )) AS returned
       FROM matured GROUP BY cohort ORDER BY cohort DESC
-    `).bind(cutoff180).all();
-    content = '<p>Повторное открытие ленты в дни 7–13 после первого визита. В отчёте только недели с завершившимся окном наблюдения.</p>' +
+    `).bind(cutoff180, device, device).all();
+    content = '<p>Повторное открытие ленты в дни 7–13 после первого визита. В отчёте только недели с завершившимся окном наблюдения. Фильтр учитывает устройство первого визита.</p>' +
       table('Возврат на второй неделе', ['Неделя с', 'Новые браузеры', 'Вернулись'], results.map(row =>
         [row.cohort, row.visitors, percent(row.returned, row.visitors)]));
   } else {
@@ -80,7 +83,7 @@ export async function onRequestGet({ request, env }) {
         WITH base AS (
           SELECT ${day('started_at')} AS day, coalesce(depth_at_click, depth) AS depth,
             active_ms, more_seen, depth_at_click IS NOT NULL AS clicked
-          FROM sessions WHERE started_at >= ?
+          FROM sessions WHERE started_at >= ? AND ${deviceFilter('device')}
         ), ranked AS (
           SELECT *, count(*) OVER (PARTITION BY day) AS n,
             row_number() OVER (PARTITION BY day ORDER BY depth) AS depth_rank,
@@ -93,15 +96,18 @@ export async function onRequestGet({ request, env }) {
           avg(CASE WHEN time_rank IN ((n+1)/2, (n+2)/2) THEN active_ms END) AS time50,
           max(CASE WHEN time_rank = (3*n+3)/4 THEN active_ms END) AS time75
         FROM ranked GROUP BY day ORDER BY day DESC
-      `).bind(cutoff),
+      `).bind(cutoff, device, device),
       db.prepare(`
         SELECT ${day('first_at')} AS day, source, count(*) AS n
-        FROM visitors WHERE first_at >= ? GROUP BY day, source ORDER BY day DESC, n DESC
-      `).bind(cutoff),
+        FROM visitors WHERE first_at >= ? AND ${deviceFilter('device')} GROUP BY day, source ORDER BY day DESC, n DESC
+      `).bind(cutoff, device, device),
       db.prepare(`
         SELECT ${day('occurred_at')} AS day, kind, domain, count(*) AS n
-        FROM events WHERE occurred_at >= ? GROUP BY day, kind, domain ORDER BY day DESC, n DESC
-      `).bind(cutoff),
+        FROM events JOIN sessions ON sessions.id = events.session_id
+        WHERE occurred_at >= ? AND kind IN ('outbound_click', 'player_open_3s')
+          AND ${deviceFilter('sessions.device')}
+        GROUP BY day, kind, domain ORDER BY day DESC, n DESC
+      `).bind(cutoff, device, device),
     ]);
     const daily = new Map(Array.from({ length: days }, (_, index) => [
       todayInMoscow(startOfDay(today) - index * dayMs), { visitors: 0, views: 0 },
@@ -111,24 +117,28 @@ export async function onRequestGet({ request, env }) {
       if (daily.has(row.day)) daily.get(row.day).visitors += row.n;
     }
     for (const row of events.results) {
-      if (row.kind === 'video_view' && daily.has(row.day)) daily.get(row.day).views += row.n;
+      if (row.kind === 'player_open_3s' && daily.has(row.day)) daily.get(row.day).views += row.n;
     }
 
-    const links = [7, 30, 90].map(n => `<a href="?days=${n}" ${days === n ? 'aria-current="page"' : ''}>${n} дней</a>`).join('');
+    const links = [7, 30, 90].map(n => `<a href="?days=${n}&amp;device=${device}" ${days === n ? 'aria-current="page"' : ''}>${n} дней</a>`).join('');
     content = `<div class="range">${links}</div>` +
       table('Лента по дням', ['Дата', 'Новые браузеры', 'Сессии', 'Карточек до «Ещё» · медиана / P75',
-        'Увидели «Ещё»', 'Нажали из увидевших', 'Просмотры видео', 'Активное время · медиана / P75'],
+        'Увидели «Ещё»', 'Нажали из увидевших', 'Открытия плеера ≥3 с', 'Активное время · медиана / P75'],
       [...daily].map(([date, row]) => [date, row.visitors, row.sessions ?? 0,
         row.sessions ? `${row.depth50} / ${row.depth75}` : '—', percent(row.seen, row.sessions),
         percent(row.clicked, row.seen), row.views,
         row.sessions ? `${duration(row.time50)} / ${duration(row.time75)}` : '—'])) +
-      '<p>Просмотр — от 3 секунд в плеере ленты. Покрытие включает YouTube и TikTok. Время в фоновой вкладке исключено.</p>' +
+      '<p>Открытый плеер в видимой вкладке ≥3 секунд, один раз на ролик за сессию. Для новых пользователей и возврата используется устройство первого визита.</p>' +
       table('Внешние переходы', ['Дата', 'Сайт', 'Клики'],
         events.results.filter(row => row.kind === 'outbound_click').map(row => [row.day, row.domain, row.n])) +
       table('Источники новых пользователей', ['Дата', 'Источник', 'Новые браузеры'],
         visitors.results.map(row => [row.day, row.source, row.n]));
   }
 
+  const deviceLinks = Object.entries({ all: 'Все устройства', mobile: 'Мобильные',
+    desktop: 'Десктопы', unknown: 'Не определено' }).map(([value, label]) =>
+    `<a href="?view=${retention ? 'retention' : 'daily'}&amp;days=${days}&amp;device=${value}"
+      ${device === value ? 'aria-current="page"' : ''}>${label}</a>`).join('');
   headers['Content-Type'] = 'text/html; charset=utf-8';
   headers['Content-Security-Policy'] = "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'";
   return new Response(`<!doctype html><html lang="ru"><meta charset="utf-8">
@@ -142,7 +152,8 @@ export async function onRequestGet({ request, env }) {
     th,td{text-align:left;border-bottom:1px solid #e1e6ee;padding:9px 10px;min-width:100px}th{color:#394762;font-size:13px}
     </style>
     <main><h1>Аналитика Trends</h1><p>Часовой пояс — Москва</p>
-    <nav aria-label="Отчёты"><a href="/analytics" ${retention ? '' : 'aria-current="page"'}>По дням</a>
-    <a href="/analytics?view=retention" ${retention ? 'aria-current="page"' : ''}>Возврат</a></nav>
+    <nav aria-label="Отчёты"><a href="/analytics?days=${days}&amp;device=${device}" ${retention ? '' : 'aria-current="page"'}>По дням</a>
+    <a href="/analytics?view=retention&amp;days=${days}&amp;device=${device}" ${retention ? 'aria-current="page"' : ''}>Возврат</a></nav>
+    <nav aria-label="Устройства">${deviceLinks}</nav>
     ${content}</main></html>`, { headers });
 }

@@ -5,6 +5,11 @@
   const endpoint = '/api/analytics';
   const idleTimeout = 30 * 60 * 1000;
   const activeTimeout = 30 * 1000;
+  const mobile = navigator.userAgentData?.mobile || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const device = mobile ? 'mobile' : 'desktop';
+  const dialog = root.querySelector('.player-dialog');
+  let playerTimer;
 
   function read(storage, key) {
     try {
@@ -29,7 +34,6 @@
   let session = read('sessionStorage', 'trendsSession');
   let lastInteraction = Date.now();
   let activeSince = lastInteraction;
-  let playing = false;
   let dirty = true;
   let sending = false;
 
@@ -62,7 +66,7 @@
 
   function tick(now = Date.now()) {
     if (!document.hidden) {
-      const activeUntil = playing ? now : Math.min(now, lastInteraction + activeTimeout);
+      const activeUntil = dialog?.open ? now : Math.min(now, lastInteraction + activeTimeout);
       const elapsed = Math.max(0, Math.min(activeUntil - activeSince, 15000));
       if (elapsed) {
         session.activeMs += elapsed;
@@ -79,7 +83,7 @@
     const events = pending.slice(0, 10);
     const body = JSON.stringify({
       visitorId, sessionId: session.id, startedAt: session.startedAt,
-      source: session.source, depth: session.seen.size, depthAtClick: session.depthAtClick,
+      source: session.source, device, depth: session.seen.size, depthAtClick: session.depthAtClick,
       moreSeen: session.moreSeen, activeMs: session.activeMs, events,
     });
     dirty = false;
@@ -177,20 +181,23 @@
     const now = Date.now();
     if (document.hidden) {
       // The visibility flag has already changed, so accrue the last foreground interval here.
-      const end = playing ? now : Math.min(now, lastInteraction + activeTimeout);
+      const end = dialog?.open ? now : Math.min(now, lastInteraction + activeTimeout);
       const elapsed = Math.max(0, Math.min(end - activeSince, 15000));
       session.activeMs += elapsed;
       if (elapsed) session.lastActivity = Math.max(session.lastActivity, end);
       if (elapsed) dirty = true;
       activeSince = now;
+      clearTimeout(playerTimer);
       flush(true);
     } else {
       activeSince = now;
       for (const element of candidates.keys()) candidates.set(element, performance.now());
       interacted();
+      trackOpenPlayer();
     }
   });
   window.addEventListener('pagehide', () => {
+    clearTimeout(playerTimer);
     tick();
     flush(true);
   });
@@ -198,103 +205,27 @@
   setInterval(() => flush(), 15000);
   flush();
 
-  let youtubeApi;
-  function loadYouTube() {
-    if (window.YT?.Player) return Promise.resolve();
-    youtubeApi ??= new Promise(resolve => {
-      window.onYouTubeIframeAPIReady = resolve;
-      const script = document.createElement('script');
-      script.src = 'https://www.youtube.com/iframe_api';
-      script.onerror = () => { youtubeApi = undefined; script.remove(); };
-      document.head.append(script);
-    });
-    return youtubeApi;
+  function trackOpenPlayer() {
+    clearTimeout(playerTimer);
+    const frame = dialog?.querySelector('iframe.player-frame');
+    if (!frame || !dialog.open || document.hidden) return;
+    const url = new URL(frame.src);
+    const domain = url.hostname.replace(/^www\./, '');
+    const parts = url.pathname.split('/').filter(Boolean);
+    const id = domain === 'instagram.com' ? parts[1] : parts.at(-1);
+    if (!['youtube.com', 'tiktok.com', 'instagram.com'].includes(domain) || !id) return;
+    playerTimer = setTimeout(() => {
+      if (dialog.open && frame.isConnected && !document.hidden) {
+        record('player_open_3s', domain, domain + ':' + id);
+      }
+    }, 3000);
   }
 
-  function trackPlayer(frame, host, id, dialog) {
-    const video = host + ':' + id;
-    let previous;
-    let watched = 0;
-    let lastSession = session.id;
-    let reported = false;
-    let polling;
-    let player;
-
-    function state(isPlaying) {
-      if (playing !== isPlaying) tick();
-      playing = isPlaying;
-      if (!playing) previous = undefined;
-      if (playing && !document.hidden) interacted();
-    }
-
-    function progress(time) {
-      if (!playing || document.hidden || !Number.isFinite(time)) {
-        previous = undefined;
-        return;
-      }
-      if (lastSession !== session.id) {
-        lastSession = session.id;
-        previous = undefined;
-        watched = 0;
-        reported = false;
-      }
-      const now = performance.now();
-      const delta = time - previous?.time;
-      const elapsed = (now - previous?.now) / 1000;
-      if (delta > 0 && delta <= elapsed * 4 + 0.35) watched += Math.min(delta, elapsed);
-      previous = { time, now };
-      if (!reported && watched >= 3) {
-        reported = true;
-        record('video_view', host, video);
-      }
-    }
-
-    function message(event) {
-      if (event.source !== frame.contentWindow || event.origin !== 'https://www.tiktok.com') return;
-      const data = event.data;
-      if (!data?.['x-tiktok-player']) return;
-      if (data.type === 'onStateChange') state(data.value === 1);
-      if (data.type === 'onCurrentTime') progress(data.value?.currentTime);
-      if (data.type === 'onPlayerError') state(false);
-    }
-
-    if (host === 'tiktok.com') window.addEventListener('message', message);
-    else void loadYouTube().then(() => {
-      if (!frame.isConnected || !dialog.open) return;
-      player = new window.YT.Player(frame, {
-        events: {
-          onStateChange: event => state(event.data === 1),
-          onError: () => state(false),
-        },
-      });
-      polling = setInterval(() => progress(player.getCurrentTime?.()), 250);
-    });
-
-    dialog.addEventListener('close', () => {
-      state(false);
-      clearInterval(polling);
-      window.removeEventListener('message', message);
-      player?.destroy?.();
-    }, { once: true });
-  }
-
-  const dialog = root.querySelector('.player-dialog');
   if (dialog) {
-    new MutationObserver(records => {
-      for (const record of records) {
-        for (const frame of record.addedNodes) {
-          if (!(frame instanceof HTMLIFrameElement) || !frame.isConnected) continue;
-          const url = new URL(frame.src);
-          if (url.origin === 'https://www.youtube.com' && /^\/embed\/[\w-]{11}$/.test(url.pathname)) {
-            url.searchParams.set('enablejsapi', '1');
-            url.searchParams.set('origin', location.origin);
-            frame.src = url.href;
-            trackPlayer(frame, 'youtube.com', url.pathname.split('/').at(-1), dialog);
-          } else if (url.origin === 'https://www.tiktok.com' && /^\/player\/v1\/\d+$/.test(url.pathname)) {
-            trackPlayer(frame, 'tiktok.com', url.pathname.split('/').at(-1), dialog);
-          }
-        }
-      }
-    }).observe(dialog, { childList: true });
+    // The feed adds a new frame each time the dialog opens.
+    new MutationObserver(trackOpenPlayer).observe(dialog, { childList: true });
+    dialog.addEventListener('close', () => {
+      if (!dialog.open) clearTimeout(playerTimer);
+    });
   }
 })();

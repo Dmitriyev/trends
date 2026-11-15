@@ -32,11 +32,12 @@ export async function onRequestPost({ request, env }) {
     return new Response(null, { status: 400 });
   }
 
+  const device = data?.device ?? 'unknown';
   const now = Date.now();
   const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
   const validTime = value => integer(value, now - maxAgeMs, now + 60000);
   const validId = value => typeof value === 'string' && uuid.test(value);
-  if (!data || !validId(data.visitorId) || !validId(data.sessionId) ||
+  if (!data || !['mobile', 'desktop', 'unknown'].includes(device) || !validId(data.visitorId) || !validId(data.sessionId) ||
       !validTime(data.startedAt) || !integer(data.depth, 0, 10000) ||
       !(data.depthAtClick === null || integer(data.depthAtClick, 0, data.depth)) ||
       typeof data.moreSeen !== 'boolean' || !integer(data.activeMs, 0, now + idleMs - data.startedAt) ||
@@ -46,10 +47,14 @@ export async function onRequestPost({ request, env }) {
   }
   for (const event of data.events) {
     if (!event || !validId(event.id) || !integer(event.at, data.startedAt, now + 60000) ||
-        !['outbound_click', 'video_view'].includes(event.kind) ||
+        !['outbound_click', 'video_view', 'player_open_3s'].includes(event.kind) ||
         typeof event.domain !== 'string' || event.domain.length > 253 || !hostname.test(event.domain) ||
         typeof event.video !== 'string' || event.video.length > 160 ||
-        (event.kind === 'video_view' && !/^(youtube\.com|tiktok\.com):[\w-]+$/.test(event.video))) {
+        (event.kind === 'video_view' && !/^(youtube\.com|tiktok\.com):[\w-]+$/.test(event.video)) ||
+        (event.kind === 'player_open_3s' && (
+          !['youtube.com', 'tiktok.com', 'instagram.com'].includes(event.domain) ||
+          !event.video.startsWith(event.domain + ':') || !/^[\w-]+$/.test(event.video.slice(event.domain.length + 1))
+        ))) {
       return new Response(null, { status: 400 });
     }
   }
@@ -57,12 +62,15 @@ export async function onRequestPost({ request, env }) {
   const db = env.ANALYTICS_DB;
   await db.batch([
     db.prepare(`
-      INSERT INTO visitors VALUES (?, ?, ?)
-      ON CONFLICT(id) DO UPDATE SET first_at = excluded.first_at, source = excluded.source
+      INSERT INTO visitors (id, first_at, source, device) VALUES (?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET first_at = excluded.first_at, source = excluded.source,
+        device = excluded.device
       WHERE excluded.first_at < visitors.first_at
-    `).bind(data.visitorId, data.startedAt, data.source),
+        OR (excluded.first_at = visitors.first_at AND visitors.device = 'unknown')
+    `).bind(data.visitorId, data.startedAt, data.source, device),
     db.prepare(`
-      INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO sessions (id, visitor_id, started_at, depth, depth_at_click, more_seen, active_ms, device)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         depth = max(depth, excluded.depth),
         depth_at_click = CASE
@@ -70,10 +78,11 @@ export async function onRequestPost({ request, env }) {
           WHEN excluded.depth_at_click IS NULL THEN depth_at_click
           ELSE min(depth_at_click, excluded.depth_at_click) END,
         more_seen = max(more_seen, excluded.more_seen),
-        active_ms = max(active_ms, excluded.active_ms)
+        active_ms = max(active_ms, excluded.active_ms),
+        device = CASE WHEN sessions.device = 'unknown' THEN excluded.device ELSE sessions.device END
       WHERE sessions.visitor_id = excluded.visitor_id
     `).bind(data.sessionId, data.visitorId, data.startedAt, data.depth,
-      data.depthAtClick, Number(data.moreSeen), data.activeMs),
+      data.depthAtClick, Number(data.moreSeen), data.activeMs, device),
     ...data.events.map(event => db.prepare(`
       INSERT OR IGNORE INTO events
       SELECT ?, id, ?, ?, ?, ? FROM sessions WHERE id = ? AND visitor_id = ?

@@ -20,7 +20,7 @@
 #trend-apify .carousel-controls button:disabled{opacity:.4}
 #trend-apify [data-batch]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));column-gap:16px;row-gap:26px;margin-bottom:26px}
 #trend-apify article{min-width:0}
-#trend-apify article:not(.trend){display:flex;flex-direction:column}
+#trend-apify article:not(.trend){display:flex;flex-direction:column;container-type:inline-size}
 #trend-apify .cover{order:-1;display:block;position:relative;width:100%;aspect-ratio:9/16;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:light-dark(#e6e8e0,#282d28);color:inherit}
 #trend-apify .cover img{width:100%;height:100%;display:block;object-fit:cover}
 #trend-apify .cover-action{position:absolute;top:9px;right:9px;display:grid;place-items:center;width:29px;height:29px;border-radius:50%;background:#171a17d9;color:#fff;font:17px/1 Arial,sans-serif;transition:background-color .15s}
@@ -29,11 +29,11 @@
 #trend-apify .cover.missing .cover-action{position:static}
 #trend-apify .meta{margin-top:8px;color:var(--sub);font-size:12px;overflow-wrap:anywhere;text-align:center}
 #trend-apify article:not(.trend)>h2{font:600 14px/1.35 Inter,Arial,sans-serif;text-align:center;overflow-wrap:anywhere;margin:5px 0 7px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-#trend-apify dl{display:flex;justify-content:center;flex-wrap:wrap;row-gap:8px;margin:0;color:var(--sub);font-size:14px;font-weight:600}
-#trend-apify dl>div{display:flex;flex:0 0 33.333%;min-width:0;flex-direction:column;align-items:center;line-height:1.2}
-#trend-apify dt{display:flex;align-items:center;justify-content:center;height:32px}
-#trend-apify dt i{font-style:normal;font-size:28px;line-height:1}
-#trend-apify dt svg{width:32px;height:32px}
+#trend-apify dl{display:flex;justify-content:center;margin:0;color:var(--sub);font-size:clamp(9px,5cqi,14px);font-weight:600}
+#trend-apify dl>div{display:flex;flex:0 0 20%;min-width:0;flex-direction:column;align-items:center;line-height:1.2}
+#trend-apify dt{display:flex;align-items:center;justify-content:center;height:clamp(22px,19cqi,32px)}
+#trend-apify dt i{font-style:normal;font-size:clamp(20px,17cqi,28px);line-height:1}
+#trend-apify dt svg{width:clamp(22px,19cqi,32px);height:100%}
 #trend-apify dd{margin:0;font-variant-numeric:tabular-nums}
 #trend-apify .metric-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #trend-apify .more{display:block;margin:16px auto;padding:0 14px}

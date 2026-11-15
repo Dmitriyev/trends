@@ -1,6 +1,6 @@
-/* Keep metrics aligned across neighboring cards when titles wrap differently. */
-@media (max-width: 650px) {
-  #trend-apify article:not(.trend) > h2 {
-    min-height: 2.7em; /* two lines at the existing 1.35 line-height */
-  }
-}
+/* Align metrics across neighboring cards, including different author/date wrapping. */
+#trend-apify article:not(.trend) > .meta { min-height: 3em; }
+#trend-apify article:not(.trend) > h2 { height: 2.7em; }
+/* Always one line; scrolling exposes all buttons on narrow viewports. */
+#trend-apify .trend-pagination { flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; overscroll-behavior-inline: contain; -webkit-overflow-scrolling: touch; padding-block: 2px 8px; }
+#trend-apify .trend-pagination button { flex: 0 0 auto; }

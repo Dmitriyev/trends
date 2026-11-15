@@ -36,6 +36,10 @@
 #trend-apify dt svg{width:clamp(22px,19cqi,32px);height:100%}
 #trend-apify dd{margin:0;font-variant-numeric:tabular-nums}
 #trend-apify .metric-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#trend-apify .trend-pagination{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;margin-top:16px}
+#trend-apify .trend-pagination button{min-width:44px;padding:0 10px;border:1px solid var(--line);border-radius:5px}
+#trend-apify .trend-pagination button[aria-current=page]{color:var(--active);border-color:currentColor;font-weight:600}
+#trend-apify .trend-pagination button:disabled{opacity:.4}
 #trend-apify .more{display:block;margin:16px auto;padding:0 14px}
 @media(max-width:650px){
  #trend-apify main{padding-top:22px}
@@ -119,6 +123,51 @@
      if(slides[next]) track.scrollTo({left:slides[next].offsetLeft-slides[0].offsetLeft});
    });
    track.addEventListener('scroll',update,{passive:true});
+ }
+ const trendPanel=root.querySelector('[data-panel="trends"]');
+ const trends=[...trendPanel.querySelectorAll(':scope > .trend')];
+ const trendsPerPage=6;
+ const pageCount=Math.ceil(trends.length/trendsPerPage);
+ if(pageCount>1){
+   const pagination=document.createElement('div');
+   pagination.className='trend-pagination';
+   pagination.setAttribute('role','navigation');
+   pagination.setAttribute('aria-label','Страницы трендов');
+   const addPageButton=(label,accessibleLabel,onClick)=>{
+     const button=document.createElement('button');
+     button.type='button';
+     button.textContent=label;
+     button.setAttribute('aria-label',accessibleLabel);
+     button.addEventListener('click',onClick);
+     pagination.append(button);
+     return button;
+   };
+   let currentPage=1;
+   const previous=addPageButton('←','Предыдущая страница',()=>showPage(currentPage-1,true));
+   const pageButtons=Array.from({length:pageCount},(_,index)=>{
+     const page=index+1;
+     return addPageButton(String(page),'Страница '+page,()=>showPage(page,true));
+   });
+   const next=addPageButton('→','Следующая страница',()=>showPage(currentPage+1,true));
+   function showPage(page, moveFocus){
+     currentPage=page;
+     const start=(page-1)*trendsPerPage;
+     trends.forEach((trend,index)=>{trend.hidden=index<start || index>=start+trendsPerPage;});
+     pageButtons.forEach((button,index)=>{
+       if(index+1===page) button.setAttribute('aria-current','page');
+       else button.removeAttribute('aria-current');
+     });
+     previous.disabled=page===1;
+     next.disabled=page===pageCount;
+     if(moveFocus){
+       const heading=trends[start].querySelector('h2');
+       heading.tabIndex=-1;
+       heading.focus({preventScroll:true});
+       trendPanel.scrollIntoView({block:'start'});
+     }
+   }
+   trendPanel.append(pagination);
+   showPage(1,false);
  }
  for(const panel of panels){
    const more=panel.querySelector('.more');

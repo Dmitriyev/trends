@@ -1,0 +1,12 @@
+{
+  "name": "trends-local",
+  "compatibility_date": "2025-01-01",
+  "pages_build_output_dir": "./site",
+  "d1_databases": [
+    {
+      "binding": "ANALYTICS_DB",
+      "database_name": "trends-local",
+      "database_id": "00000000-0000-4000-8000-000000000001"
+    }
+  ]
+}

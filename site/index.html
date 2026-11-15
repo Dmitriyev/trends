@@ -65,6 +65,52 @@ html,body{max-width:100%;overflow-x:clip}
 </style><script>
 (() => {
  const root=document.getElementById('trend-apify');
+  const panels=[...root.querySelectorAll('[data-panel]')];
+  const maxFreshnessBonus=0.25;
+  const millisecondsPerDay=24*60*60*1000;
+
+  function rankVideo(card){
+    const metric=card.querySelector('dl > div[title^="Просмотры —"], dl > div[title^="Воспроизведения —"]');
+    const views=Number(metric?.querySelector('dd .metric-label')?.textContent.replace(/\s/g,''));
+    const date=card.querySelector('.meta')?.textContent.match(/\d{4}-\d{2}-\d{2}$/);
+    return {card,views:Number.isFinite(views)?views:0,published:Date.parse(date?.[0]) || 0};
+  }
+
+  function compareByViews(a,b){
+    return b.views-a.views || b.published-a.published;
+  }
+
+  function rankFeed(items){
+    const latestPublished=items.reduce((latest,item)=>Math.max(latest,item.published),0);
+    const score=item=>{
+      const age=(latestPublished-item.published)/millisecondsPerDay;
+      const freshness=item.published?Math.max(0,1-age):0;
+      return item.views*(1+maxFreshnessBonus*freshness);
+    };
+    return items.sort((a,b)=>score(b)-score(a) || compareByViews(a,b));
+  }
+
+  for(const panel of panels){
+    if(panel.dataset.panel==='trends'){
+      const trends=[...panel.querySelectorAll(':scope > .trend')].map(card=>{
+        const carousel=card.querySelector('.carousel');
+        const videos=[...carousel.querySelectorAll(':scope > article')].map(rankVideo).sort(compareByViews);
+        carousel.append(...videos.map(video=>video.card));
+        return {card,views:videos[0]?.views ?? 0,published:videos[0]?.published ?? 0};
+      });
+      panel.append(...rankFeed(trends).map(trend=>trend.card));
+    }else{
+      const batches=[...panel.querySelectorAll(':scope > [data-batch]')];
+      const pages=batches.map(batch=>({batch,cards:[...batch.querySelectorAll(':scope > article')]}));
+      const videos=rankFeed(pages.flatMap(page=>page.cards).map(rankVideo));
+      let offset=0;
+      for(const {batch,cards} of pages){
+        const end=offset+cards.length;
+        batch.append(...videos.slice(offset,end).map(video=>video.card));
+        offset=end;
+      }
+    }
+  }
 
  const previewFiles=new Map();
  function loadPreview(img){
@@ -133,7 +179,6 @@ html,body{max-width:100%;overflow-x:clip}
    dialog.addEventListener('close',()=>dialog.querySelector('iframe')?.remove());
  }
  const tabs=[...root.querySelectorAll('[data-filter]')];
- const panels=[...root.querySelectorAll('[data-panel]')];
  for(const tab of tabs) tab.addEventListener('click',()=>{
    for(const button of tabs) button.setAttribute('aria-pressed',String(button===tab));
    for(const panel of panels) panel.hidden=panel.dataset.panel!==tab.dataset.filter;

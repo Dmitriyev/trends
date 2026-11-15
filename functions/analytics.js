@@ -120,6 +120,17 @@ export async function onRequestGet({ request, env }) {
       if (row.kind === 'player_open_3s' && daily.has(row.day)) daily.get(row.day).views += row.n;
     }
 
+
+    const paginationRows = await db.prepare(`
+      SELECT ${day('events.occurred_at')} AS day,
+        substr(events.video, 1, instr(events.video, ':') - 1) AS tab,
+        sum(CASE WHEN events.kind = 'pagination_seen' THEN 1 ELSE 0 END) AS seen,
+        sum(CASE WHEN events.kind = 'pagination_clicked' THEN 1 ELSE 0 END) AS clicked
+      FROM events JOIN sessions ON sessions.id = events.session_id
+      WHERE events.occurred_at >= ? AND events.kind IN ('pagination_seen', 'pagination_clicked')
+        AND ${deviceFilter('sessions.device')}
+      GROUP BY day, tab ORDER BY day DESC, tab
+    `).bind(cutoff, device, device).all();
     const links = [7, 30, 90].map(n => `<a href="?days=${n}&amp;device=${device}" ${days === n ? 'aria-current="page"' : ''}>${n} дней</a>`).join('');
     content = `<div class="range">${links}</div>` +
       table('Лента по дням', ['Дата', 'Новые браузеры', 'Сессии', 'Карточек до «Ещё» · медиана / P75',
@@ -129,6 +140,8 @@ export async function onRequestGet({ request, env }) {
         percent(row.clicked, row.seen), row.views,
         row.sessions ? `${duration(row.time50)} / ${duration(row.time75)}` : '—'])) +
       '<p>Открытый плеер в видимой вкладке ≥3 секунд, один раз на ролик за сессию. Для новых пользователей и возврата используется устройство первого визита.</p>' +
+      table('Пагинация по вкладкам', ['Дата', 'Вкладка', 'Дошли до пагинации', 'Нажали дальше'],
+        paginationRows.results.map(row => [row.day, row.tab, row.seen, row.clicked])) +
       table('Внешние переходы', ['Дата', 'Сайт', 'Клики'],
         events.results.filter(row => row.kind === 'outbound_click').map(row => [row.day, row.domain, row.n])) +
       table('Источники новых пользователей', ['Дата', 'Источник', 'Новые браузеры'],

@@ -31,6 +31,26 @@
   write('localStorage', 'trendsVisitor', visitorId);
   const pending = [];
   const candidates = new Map();
+  const paginationSeen = new Set();
+  const paginationClicked = new Set();
+  function paginationContext(button) {
+    const panel = button.closest('[data-tab], [data-platform], [role="tabpanel"], section[id], .tab-panel');
+    const active = root.querySelector('[role="tab"][aria-selected="true"], .tab.active, .tab.is-active, [data-tab].active');
+    const raw = [panel?.dataset.tab, panel?.dataset.platform, panel?.id, active?.dataset.tab, active?.textContent].filter(Boolean).join(' ').toLowerCase();
+    const tab = /instagram|инстаграм/.test(raw) ? 'instagram' : /youtube|ютуб/.test(raw) ? 'youtube'
+      : /tiktok|тикток/.test(raw) ? 'tiktok' : /trend|тренд/.test(raw) ? 'trends' : 'home';
+    const n = Number(button.dataset.page || button.dataset.nextPage || button.closest('[data-page]')?.dataset.page || 1);
+    return { tab, page: Number.isSafeInteger(n) && n > 0 ? n : 1 };
+  }
+  function paginationEvent(kind, button) {
+    const { tab, page } = paginationContext(button);
+    const key = tab + ':' + page;
+    const dedupe = kind === 'pagination_seen' ? paginationSeen : paginationClicked;
+    if (dedupe.has(key)) return;
+    dedupe.add(key);
+    record(kind, 'trends.local', key);
+  }
+
   let session = read('sessionStorage', 'trendsSession');
   let lastInteraction = Date.now();
   let activeSince = lastInteraction;
@@ -145,6 +165,7 @@
       if (element.closest('[hidden]') || (!(forceButton && button) && performance.now() - since < 1000)) continue;
       if (button) {
         if (!session.moreSeen) dirty = session.moreSeen = true;
+        paginationEvent('pagination_seen', element);
         continue;
       }
       const cover = element.querySelector('a.cover[href]');
@@ -161,6 +182,7 @@
     if (session.depthAtClick !== null) return;
     collectVisible(true);
     session.moreSeen = true;
+    paginationEvent('pagination_clicked', event.target.closest('.more'));
     session.depthAtClick = session.seen.size;
     flush(true);
   }, { capture: true });

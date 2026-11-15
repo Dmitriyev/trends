@@ -54,6 +54,14 @@
 #trend-apify .player-bar a{color:var(--active)}
 #trend-apify .player-bar button{min-width:44px}
 #trend-apify .player-frame{display:block;border:0;width:100%;height:min(73dvh,650px);background:#141414}
+
+/* Keep horizontally scrolling video tracks from expanding the document. */
+html,body{max-width:100%;overflow-x:clip}
+#trend-apify{width:100%;max-width:100%;min-width:0;overflow-x:clip}
+#trend-apify main,#trend-apify [data-panel],#trend-apify .trend{width:100%;min-width:0;max-width:100%}
+#trend-apify .carousel{width:100%;max-width:100%;min-width:0;grid-template-columns:none;contain:inline-size}
+#trend-apify .carousel>article{min-width:0;max-width:100%}
+#trend-apify nav{max-width:100%;min-width:0}
 </style><script>
 (() => {
  const root=document.getElementById('trend-apify');

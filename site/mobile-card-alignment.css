@@ -1,0 +1,6 @@
+/* Keep metrics aligned across neighboring cards when titles wrap differently. */
+@media (max-width: 650px) {
+  #trend-apify article:not(.trend) > h2 {
+    min-height: 2.7em; /* two lines at the existing 1.35 line-height */
+  }
+}

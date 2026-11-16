@@ -18,6 +18,73 @@ function table(title, headers, rows) {
       `<tr><td colspan="${headers.length}">Пока нет данных</td></tr>`}</tbody></table></div></section>`;
 }
 
+const sessionDate = new Intl.DateTimeFormat('ru-RU', {
+  timeZone: 'Europe/Moscow', dateStyle: 'short', timeStyle: 'short',
+});
+const deviceLabels = { mobile: 'Мобильное', desktop: 'Десктоп', unknown: 'Не определено' };
+const platformLabels = { tiktok: 'TikTok', instagram: 'Instagram', youtube: 'YouTube', trends: 'Тренды', home: 'Главная' };
+
+async function topSessions(db, cutoff, device) {
+  const { results } = await db.prepare(`
+    WITH platform_events AS (
+      SELECT events.session_id,
+        CASE
+          WHEN kind IN ('pagination_seen', 'pagination_clicked')
+            THEN substr(video, 1, instr(video, ':') - 1)
+          WHEN domain = 'tiktok.com' OR domain LIKE '%.tiktok.com' THEN 'tiktok'
+          WHEN domain = 'instagram.com' OR domain LIKE '%.instagram.com' THEN 'instagram'
+          WHEN domain IN ('youtube.com', 'youtu.be') OR domain LIKE '%.youtube.com' THEN 'youtube'
+          ELSE domain
+        END AS platform,
+        sum(kind = 'player_open_3s') AS player_opens,
+        sum(kind = 'outbound_click') AS outbound_clicks,
+        sum(kind = 'pagination_seen') AS pagination_seen,
+        sum(kind = 'pagination_clicked') AS pagination_clicks,
+        sum(kind = 'video_view') AS legacy_views
+      FROM events JOIN sessions ON sessions.id = events.session_id
+      WHERE occurred_at >= ? AND started_at >= ? AND (? = 'all' OR sessions.device = ?)
+        AND kind IN ('player_open_3s', 'outbound_click', 'pagination_seen', 'pagination_clicked', 'video_view')
+      GROUP BY events.session_id, platform
+    ), totals AS (
+      SELECT session_id, sum(player_opens + outbound_clicks + pagination_clicks) AS actions
+      FROM platform_events GROUP BY session_id
+    ), ranked AS (
+      SELECT sessions.id, started_at, device, depth, depth_at_click, more_seen, active_ms,
+        coalesce(actions, 0) AS actions
+      FROM sessions LEFT JOIN totals ON totals.session_id = sessions.id
+      WHERE started_at >= ? AND (? = 'all' OR device = ?)
+      ORDER BY actions DESC, depth DESC, active_ms DESC, started_at DESC, sessions.id
+      LIMIT 20
+    )
+    SELECT ranked.*, platform, player_opens, outbound_clicks, pagination_seen, pagination_clicks, legacy_views
+    FROM ranked LEFT JOIN platform_events ON platform_events.session_id = ranked.id
+    ORDER BY actions DESC, depth DESC, active_ms DESC, started_at DESC, ranked.id, platform
+  `).bind(cutoff, cutoff, device, device, cutoff, device, device).all();
+
+  const sessions = new Map();
+  for (const row of results) {
+    if (!sessions.has(row.id)) sessions.set(row.id, { ...row, platforms: [] });
+    if (row.platform !== null) sessions.get(row.id).platforms.push(row);
+  }
+  if (!sessions.size) return '<p>За выбранный период сессий нет.</p>';
+
+  return '<p>Топ-20 по сумме открытий плеера ≥3 с, внешних кликов и переходов между страницами. При равенстве выше сессии с большим числом просмотренных карточек, затем с большим активным временем.</p>' +
+    '<p>Открытия плеера считаются один раз на ролик за сессию. Для пагинации показано число записанных событий с учётом дедупликации по вкладке и странице. «Просмотры (старый счётчик)» — события, записанные прежней версией трекера.</p>' +
+    [...sessions.values()].map((session, index) => {
+      const { platforms } = session;
+      return `<details><summary><strong>${index + 1}. ${sessionDate.format(session.started_at)}</strong>
+        · ${deviceLabels[session.device]} · ${session.actions} действий · ${session.depth} карточек · ${duration(session.active_ms)}</summary>
+        <p>Сессия <code>${escape(session.id)}</code><br>
+        Карточек до первого перехода между страницами: ${escape(session.depth_at_click)}<br>
+        Дошёл до пагинации: ${session.more_seen ? 'да' : 'нет'}</p>
+        ${table('Действия по платформам и вкладкам', ['Платформа или вкладка', 'Плеер ≥3 с', 'Внешние клики',
+          'Показы пагинации', 'Переходы между страницами', 'Просмотры (старый счётчик)'],
+        platforms.map(row => [Object.hasOwn(platformLabels, row.platform) ? platformLabels[row.platform] : row.platform,
+          row.player_opens, row.outbound_clicks, row.pagination_seen, row.pagination_clicks, row.legacy_views]))}
+      </details>`;
+    }).join('');
+}
+
 async function authorized(request, password) {
   if (!password) return false;
   const authorization = request.headers.get('Authorization') || '';
@@ -47,7 +114,8 @@ export async function onRequestGet({ request, env }) {
   if (!db) return new Response('Analytics database is not configured', { status: 503, headers });
 
   const params = new URL(request.url).searchParams;
-  const retention = params.get('view') === 'retention';
+  const selectedView = params.get('view');
+  const view = ['retention', 'sessions'].includes(selectedView) ? selectedView : 'daily';
   const selectedDevice = params.get('device');
   const device = ['mobile', 'desktop', 'unknown'].includes(selectedDevice) ? selectedDevice : 'all';
   const deviceFilter = column => `(? = 'all' OR ${column} = ?)`;
@@ -55,7 +123,9 @@ export async function onRequestGet({ request, env }) {
   const today = todayInMoscow(Date.now());
   const cutoff = startOfDay(today) - (days - 1) * dayMs;
   let content;
-  if (retention) {
+  const rangeLinks = [7, 30, 90].map(n =>
+    `<a href="?view=${view}&amp;days=${n}&amp;device=${device}" ${days === n ? 'aria-current="page"' : ''}>${n} дней</a>`).join('');
+  if (view === 'retention') {
     const cutoff180 = startOfDay(today) - 179 * dayMs;
     const { results } = await db.prepare(`
       WITH eligible AS (
@@ -77,6 +147,8 @@ export async function onRequestGet({ request, env }) {
     content = '<p>Повторное открытие ленты в дни 7–13 после первого визита. В отчёте только недели с завершившимся окном наблюдения. Фильтр учитывает устройство первого визита.</p>' +
       table('Возврат на второй неделе', ['Неделя с', 'Новые браузеры', 'Вернулись'], results.map(row =>
         [row.cohort, row.visitors, percent(row.returned, row.visitors)]));
+  } else if (view === 'sessions') {
+    content = `<div class="range">${rangeLinks}</div>` + await topSessions(db, cutoff, device);
   } else {
     const [sessions, visitors, events] = await db.batch([
       db.prepare(`
@@ -131,8 +203,7 @@ export async function onRequestGet({ request, env }) {
         AND ${deviceFilter('sessions.device')}
       GROUP BY day, tab ORDER BY day DESC, tab
     `).bind(cutoff, device, device).all();
-    const links = [7, 30, 90].map(n => `<a href="?days=${n}&amp;device=${device}" ${days === n ? 'aria-current="page"' : ''}>${n} дней</a>`).join('');
-    content = `<div class="range">${links}</div>` +
+    content = `<div class="range">${rangeLinks}</div>` +
       table('Лента по дням', ['Дата', 'Новые браузеры', 'Сессии', 'Карточек до перехода между страницами · медиана / P75',
         'Увидели пагинацию', 'Перешли из увидевших', 'Открытия плеера ≥3 с', 'Активное время · медиана / P75'],
       [...daily].map(([date, row]) => [date, row.visitors, row.sessions ?? 0,
@@ -150,7 +221,7 @@ export async function onRequestGet({ request, env }) {
 
   const deviceLinks = Object.entries({ all: 'Все устройства', mobile: 'Мобильные',
     desktop: 'Десктопы', unknown: 'Не определено' }).map(([value, label]) =>
-    `<a href="?view=${retention ? 'retention' : 'daily'}&amp;days=${days}&amp;device=${value}"
+    `<a href="?view=${view}&amp;days=${days}&amp;device=${value}"
       ${device === value ? 'aria-current="page"' : ''}>${label}</a>`).join('');
   headers['Content-Type'] = 'text/html; charset=utf-8';
   headers['Content-Security-Policy'] = "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'";
@@ -160,13 +231,15 @@ export async function onRequestGet({ request, env }) {
     *{box-sizing:border-box}body{font:15px/1.5 system-ui,sans-serif;margin:0;background:#f4f6fa;color:#182238}
     main{max-width:1280px;margin:auto;padding:clamp(16px,4vw,48px)}h1{font-size:32px;margin:0}h2{font-size:18px;margin:0 0 12px}
     p{color:#48556c}nav,.range{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}a{color:#254f9e;padding:6px 10px;border-radius:6px}
-    a[aria-current]{background:#dfeaff;color:#172d62;font-weight:650}section{background:#fff;border:1px solid #dce2eb;border-radius:10px;padding:16px;margin:16px 0}
+    a[aria-current]{background:#dfeaff;color:#172d62;font-weight:650}section,details{background:#fff;border:1px solid #dce2eb;border-radius:10px;padding:16px;margin:16px 0}
+    summary{cursor:pointer}details code{overflow-wrap:anywhere}
     .scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
     th,td{text-align:left;border-bottom:1px solid #e1e6ee;padding:9px 10px;min-width:100px}th{color:#394762;font-size:13px}
     </style>
     <main><h1>Аналитика Trends</h1><p>Часовой пояс — Москва</p>
-    <nav aria-label="Отчёты"><a href="/analytics?days=${days}&amp;device=${device}" ${retention ? '' : 'aria-current="page"'}>По дням</a>
-    <a href="/analytics?view=retention&amp;days=${days}&amp;device=${device}" ${retention ? 'aria-current="page"' : ''}>Возврат</a></nav>
+    <nav aria-label="Отчёты"><a href="/analytics?days=${days}&amp;device=${device}" ${view === 'daily' ? 'aria-current="page"' : ''}>По дням</a>
+    <a href="/analytics?view=retention&amp;days=${days}&amp;device=${device}" ${view === 'retention' ? 'aria-current="page"' : ''}>Возврат</a>
+    <a href="/analytics?view=sessions&amp;days=${days}&amp;device=${device}" ${view === 'sessions' ? 'aria-current="page"' : ''}>Топ сессий</a></nav>
     <nav aria-label="Устройства">${deviceLinks}</nav>
     ${content}</main></html>`, { headers });
 }

@@ -67,50 +67,91 @@ html,body{max-width:100%;overflow-x:clip}
  const root=document.getElementById('trend-apify');
   const panels=[...root.querySelectorAll('[data-panel]')];
   const maxFreshnessBonus=0.25;
-  const millisecondsPerDay=24*60*60*1000;
+  const maxHourlyVariation=0.03;
+  const millisecondsPerHour=60*60*1000;
+  const millisecondsPerDay=24*millisecondsPerHour;
 
   function rankVideo(card){
     const metric=card.querySelector('dl > div[title^="Просмотры —"], dl > div[title^="Воспроизведения —"]');
     const views=Number(metric?.querySelector('dd .metric-label')?.textContent.replace(/\s/g,''));
     const date=card.querySelector('.meta')?.textContent.match(/\d{4}-\d{2}-\d{2}$/);
-    return {card,views:Number.isFinite(views)?views:0,published:Date.parse(date?.[0]) || 0};
+    const key=card.querySelector('a.cover')?.getAttribute('href') ?? card.querySelector('h2')?.textContent;
+    return {card,key,views:Number.isFinite(views)?views:0,published:Date.parse(date?.[0]) || 0};
   }
 
   function compareByViews(a,b){
     return b.views-a.views || b.published-a.published;
   }
 
-  function rankFeed(items){
-    const latestPublished=items.reduce((latest,item)=>Math.max(latest,item.published),0);
-    const score=item=>{
-      const age=(latestPublished-item.published)/millisecondsPerDay;
-      const freshness=item.published?Math.max(0,1-age):0;
-      return item.views*(1+maxFreshnessBonus*freshness);
-    };
-    return items.sort((a,b)=>score(b)-score(a) || compareByViews(a,b));
+  function hourlyMultiplier(key,hour){
+    let hash=2166136261;
+    const seed=hour+':'+key;
+    for(let i=0;i<seed.length;i++){
+      hash=Math.imul(hash^seed.charCodeAt(i),16777619);
+    }
+    hash=Math.imul(hash^(hash>>>16),0x85ebca6b);
+    hash=Math.imul(hash^(hash>>>13),0xc2b2ae35);
+    const fraction=((hash^(hash>>>16))>>>0)/0x100000000;
+    return 1+(2*fraction-1)*maxHourlyVariation;
   }
 
-  for(const panel of panels){
+  function rankFeed(items,hour){
+    const latestPublished=items.reduce((latest,item)=>Math.max(latest,item.published),0);
+    return items.map(item=>{
+      const age=(latestPublished-item.published)/millisecondsPerDay;
+      const freshness=item.published?Math.max(0,1-age):0;
+      return {...item,score:item.views*(1+maxFreshnessBonus*freshness)*hourlyMultiplier(item.key,hour)};
+    }).sort((a,b)=>b.score-a.score || compareByViews(a,b));
+  }
+
+  const feeds=panels.map(panel=>{
     if(panel.dataset.panel==='trends'){
       const trends=[...panel.querySelectorAll(':scope > .trend')].map(card=>{
         const carousel=card.querySelector('.carousel');
         const videos=[...carousel.querySelectorAll(':scope > article')].map(rankVideo).sort(compareByViews);
         carousel.append(...videos.map(video=>video.card));
-        return {card,views:videos[0]?.views ?? 0,published:videos[0]?.published ?? 0};
+        const key=card.querySelector('h2')?.textContent+':'+videos[0]?.key;
+        return {card,key,views:videos[0]?.views ?? 0,published:videos[0]?.published ?? 0};
       });
-      panel.append(...rankFeed(trends).map(trend=>trend.card));
-    }else{
-      const batches=[...panel.querySelectorAll(':scope > [data-batch]')];
-      const pages=batches.map(batch=>({batch,cards:[...batch.querySelectorAll(':scope > article')]}));
-      const videos=rankFeed(pages.flatMap(page=>page.cards).map(rankVideo));
+      const cards=trends.map(trend=>trend.card);
+      const refreshPage=paginate(panel,cards,6,'Страницы трендов','h2');
+      return hour=>{
+        cards.splice(0,cards.length,...rankFeed(trends,hour).map(trend=>trend.card));
+        panel.prepend(...cards);
+        refreshPage?.();
+      };
+    }
+    const batches=[...panel.querySelectorAll(':scope > [data-batch]')];
+    const pages=batches.map(batch=>({batch,cards:[...batch.querySelectorAll(':scope > article')]}));
+    const items=pages.flatMap(page=>page.cards).map(rankVideo);
+    paginate(panel,batches,1,'Страницы видео: '+panel.getAttribute('aria-label'),'article h2');
+    return hour=>{
+      const videos=rankFeed(items,hour);
       let offset=0;
       for(const {batch,cards} of pages){
         const end=offset+cards.length;
         batch.append(...videos.slice(offset,end).map(video=>video.card));
         offset=end;
       }
+    };
+  });
+
+  let rankedHour;
+  let rankingTimer;
+  function refreshRanking(){
+    const now=Date.now();
+    const hour=Math.floor(now/millisecondsPerHour);
+    if(hour!==rankedHour){
+      for(const updateFeed of feeds) updateFeed(hour);
+      rankedHour=hour;
     }
+    clearTimeout(rankingTimer);
+    rankingTimer=setTimeout(refreshRanking,(hour+1)*millisecondsPerHour-Date.now());
   }
+  refreshRanking();
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden) refreshRanking();
+  });
 
  const previewFiles=new Map();
  function loadPreview(img){
@@ -245,14 +286,7 @@ html,body{max-width:100%;overflow-x:clip}
    }
    panel.append(pagination);
    showPage(1,false);
- }
- for(const panel of panels){
-   if(panel.dataset.panel==='trends'){
-     paginate(panel,[...panel.querySelectorAll(':scope > .trend')],6,'Страницы трендов','h2');
-   }else{
-     paginate(panel,[...panel.querySelectorAll(':scope > [data-batch]')],1,
-       'Страницы видео: '+panel.getAttribute('aria-label'),'article h2');
-   }
+   return ()=>showPage(currentPage,false);
  }
 })();
 </script></body></html>

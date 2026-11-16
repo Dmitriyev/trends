@@ -2,7 +2,7 @@
 #trend-apify{color-scheme:light dark;--paper:light-dark(#f7f6f2,#181a18);--ink:light-dark(#242722,#eeeee7);--sub:light-dark(#5e625a,#b8bcb2);--line:light-dark(#d9dcd2,#3c423a);--active:light-dark(#304e3d,#bad5b9);background:var(--paper);color:var(--ink);font:15px/1.5 Inter,Arial,sans-serif}
 #trend-apify *{box-sizing:border-box}
 #trend-apify [hidden]{display:none!important}
-#trend-apify main{max-width:1056px;margin:auto;padding:32px clamp(14px,4vw,48px) 56px}
+#trend-apify main{width:100%;min-width:0;max-width:880px;margin:auto;padding:32px clamp(14px,4vw,48px) 56px}
 #trend-apify h1,#trend-apify .trend>h2{font-family:"PT Serif",Georgia,serif;line-height:1.14;margin:0}
 #trend-apify h1{font-size:clamp(29px,4.7vw,49px);letter-spacing:-.035em}
 #trend-apify nav{display:flex;gap:clamp(12px,3.5vw,32px);margin-top:16px;border-block-end:1px solid var(--line);overflow-x:auto}
@@ -58,7 +58,7 @@
 /* Keep horizontally scrolling video tracks from expanding the document. */
 html,body{max-width:100%;overflow-x:clip}
 #trend-apify{width:100%;max-width:100%;min-width:0;overflow-x:clip}
-#trend-apify main,#trend-apify [data-panel],#trend-apify .trend{width:100%;min-width:0;max-width:100%}
+#trend-apify [data-panel],#trend-apify .trend{width:100%;min-width:0;max-width:100%}
 #trend-apify .carousel{width:100%;max-width:100%;min-width:0;grid-template-columns:none;contain:inline-size}
 #trend-apify .carousel>article{min-width:0;max-width:100%}
 #trend-apify nav{max-width:100%;min-width:0}

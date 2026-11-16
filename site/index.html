@@ -204,8 +204,8 @@
 #trend-apify dt svg{width:clamp(22px,19cqi,32px);height:100%}
 #trend-apify dd{margin:0;font-variant-numeric:tabular-nums}
 #trend-apify .metric-label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-#trend-apify .trend-pagination{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;margin-top:16px}
-#trend-apify .trend-pagination button{min-width:44px;padding:0 10px;border:1px solid var(--line);border-radius:5px}
+#trend-apify .trend-pagination{display:flex;justify-content:center;align-items:center;gap:clamp(2px,1vw,6px);margin-top:16px}
+#trend-apify .trend-pagination button{flex:0 1 44px;min-width:0;padding:0;border:1px solid var(--line);border-radius:5px}
 #trend-apify .trend-pagination button[aria-current=page]{color:var(--active);border-color:currentColor;font-weight:600}
 #trend-apify .trend-pagination button:disabled{opacity:.4}
 @media(max-width:650px){
@@ -428,19 +428,36 @@ html,body{max-width:100%;overflow-x:clip}
      pagination.append(button);
      return button;
    };
+   const addPageGap=(before)=>{
+     const gap=document.createElement('span');
+     gap.textContent='…';
+     gap.setAttribute('aria-hidden','true');
+     pagination.insertBefore(gap,before);
+     return gap;
+   };
    let currentPage=1;
    const previous=addPageButton('←','Предыдущая страница',()=>showPage(currentPage-1,true));
    const pageButtons=Array.from({length:pageCount},(_,index)=>{
      const page=index+1;
      return addPageButton(String(page),'Страница '+page,()=>showPage(page,true));
    });
+   const leadingGap=addPageGap(pageButtons[1]);
+   const trailingGap=addPageGap(pageButtons[pageCount-1]);
    const next=addPageButton('→','Следующая страница',()=>showPage(currentPage+1,true));
    function showPage(page, moveFocus){
      currentPage=page;
      const start=(page-1)*itemsPerPage;
      items.forEach((item,index)=>{item.hidden=index<start || index>=start+itemsPerPage;});
+     const compact=pageCount>5;
+     const nearStart=page<=3;
+     const nearEnd=page>=pageCount-2;
+     leadingGap.hidden=!compact || nearStart;
+     trailingGap.hidden=!compact || nearEnd;
      pageButtons.forEach((button,index)=>{
-       if(index+1===page) button.setAttribute('aria-current','page');
+       const number=index+1;
+       button.hidden=compact && number!==1 && number!==pageCount && number!==page
+         && !(nearStart && number<=3) && !(nearEnd && number>=pageCount-2);
+       if(number===page) button.setAttribute('aria-current','page');
        else button.removeAttribute('aria-current');
      });
      previous.disabled=page===1;

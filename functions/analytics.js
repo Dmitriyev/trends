@@ -133,14 +133,14 @@ export async function onRequestGet({ request, env }) {
     `).bind(cutoff, device, device).all();
     const links = [7, 30, 90].map(n => `<a href="?days=${n}&amp;device=${device}" ${days === n ? 'aria-current="page"' : ''}>${n} дней</a>`).join('');
     content = `<div class="range">${links}</div>` +
-      table('Лента по дням', ['Дата', 'Новые браузеры', 'Сессии', 'Карточек до «Ещё» · медиана / P75',
-        'Увидели «Ещё»', 'Нажали из увидевших', 'Открытия плеера ≥3 с', 'Активное время · медиана / P75'],
+      table('Лента по дням', ['Дата', 'Новые браузеры', 'Сессии', 'Карточек до перехода между страницами · медиана / P75',
+        'Увидели пагинацию', 'Перешли из увидевших', 'Открытия плеера ≥3 с', 'Активное время · медиана / P75'],
       [...daily].map(([date, row]) => [date, row.visitors, row.sessions ?? 0,
         row.sessions ? `${row.depth50} / ${row.depth75}` : '—', percent(row.seen, row.sessions),
         percent(row.clicked, row.seen), row.views,
         row.sessions ? `${duration(row.time50)} / ${duration(row.time75)}` : '—'])) +
       '<p>Открытый плеер в видимой вкладке ≥3 секунд, один раз на ролик за сессию. Для новых пользователей и возврата используется устройство первого визита.</p>' +
-      table('Пагинация по вкладкам', ['Дата', 'Вкладка', 'Дошли до пагинации', 'Нажали дальше'],
+      table('Пагинация по вкладкам', ['Дата', 'Вкладка', 'Дошли до пагинации', 'Перешли на другую страницу'],
         paginationRows.results.map(row => [row.day, row.tab, row.seen, row.clicked])) +
       table('Внешние переходы', ['Дата', 'Сайт', 'Клики'],
         events.results.filter(row => row.kind === 'outbound_click').map(row => [row.day, row.domain, row.n])) +

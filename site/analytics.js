@@ -33,17 +33,12 @@
   const candidates = new Map();
   const paginationSeen = new Set();
   const paginationClicked = new Set();
-  function paginationContext(button) {
-    const panel = button.closest('[data-tab], [data-platform], [role="tabpanel"], section[id], .tab-panel');
-    const active = root.querySelector('[role="tab"][aria-selected="true"], .tab.active, .tab.is-active, [data-tab].active');
-    const raw = [panel?.dataset.tab, panel?.dataset.platform, panel?.id, active?.dataset.tab, active?.textContent].filter(Boolean).join(' ').toLowerCase();
-    const tab = /instagram|инстаграм/.test(raw) ? 'instagram' : /youtube|ютуб/.test(raw) ? 'youtube'
-      : /tiktok|тикток/.test(raw) ? 'tiktok' : /trend|тренд/.test(raw) ? 'trends' : 'home';
-    const n = Number(button.dataset.page || button.dataset.nextPage || button.closest('[data-page]')?.dataset.page || 1);
-    return { tab, page: Number.isSafeInteger(n) && n > 0 ? n : 1 };
-  }
-  function paginationEvent(kind, button) {
-    const { tab, page } = paginationContext(button);
+  const paginationTabs = { trends: 'trends', tiktok: 'tiktok', reels: 'instagram', shorts: 'youtube' };
+
+  function paginationEvent(kind, controls) {
+    const tab = paginationTabs[controls.closest('[data-panel]')?.dataset.panel];
+    const page = Number(controls.querySelector('[aria-current="page"]')?.textContent);
+    if (!tab || !Number.isSafeInteger(page) || page < 1) return;
     const key = tab + ':' + page;
     const dedupe = kind === 'pagination_seen' ? paginationSeen : paginationClicked;
     if (dedupe.has(key)) return;
@@ -156,18 +151,16 @@
       else candidates.delete(entry.target);
     }
   }, { threshold: 0.5 });
-  for (const element of root.querySelectorAll('article:has(> a.cover), .more')) {
+  for (const element of root.querySelectorAll('article:has(> a.cover), .trend-pagination')) {
     observer.observe(element);
   }
 
-  function collectVisible(forceButton = false) {
+  function collectVisible() {
     if (document.hidden || Date.now() - session.lastActivity >= idleTimeout) return;
     for (const [element, since] of candidates) {
-      const button = element.matches('.more');
-      if (element.closest('[hidden]') || (!(forceButton && button) && performance.now() - since < 1000)) continue;
-      if (button) {
-        if (!session.moreSeen) dirty = session.moreSeen = true;
-        paginationEvent('pagination_seen', element);
+      if (element.closest('[hidden]') || performance.now() - since < 1000) continue;
+      if (element.matches('.trend-pagination')) {
+        markPaginationSeen(element);
         continue;
       }
       const cover = element.querySelector('a.cover[href]');
@@ -178,15 +171,25 @@
     }
   }
 
+  function markPaginationSeen(controls) {
+    if (!session.moreSeen) dirty = session.moreSeen = true;
+    paginationEvent('pagination_seen', controls);
+  }
+
   root.addEventListener('click', event => {
-    if (!event.target.closest('.more')) return;
+    const button = event.target.closest('.trend-pagination button');
+    if (!button || button.disabled || button.hidden || button.matches('[aria-current="page"]')) return;
+    const controls = button.closest('.trend-pagination');
+    if (controls.closest('[hidden]')) return;
     interacted();
-    paginationEvent('pagination_clicked', event.target.closest('.more'));
-    if (session.depthAtClick !== null) return;
-    collectVisible(true);
-    session.moreSeen = true;
-    session.depthAtClick = session.seen.size;
-    flush(true);
+    collectVisible();
+    if (session.depthAtClick === null) {
+      session.depthAtClick = session.seen.size;
+      dirty = true;
+    }
+    markPaginationSeen(controls);
+    paginationEvent('pagination_clicked', controls);
+    if (candidates.has(controls)) candidates.set(controls, performance.now());
   }, { capture: true });
 
   function outbound(event) {

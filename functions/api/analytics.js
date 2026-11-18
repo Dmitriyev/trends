@@ -33,11 +33,13 @@ export async function onRequestPost({ request, env }) {
   }
 
   const device = data?.device ?? 'unknown';
+  const language = data?.language ?? 'unknown';
   const now = Date.now();
   const integer = (value, min, max) => Number.isSafeInteger(value) && value >= min && value <= max;
   const validTime = value => integer(value, now - maxAgeMs, now + 60000);
   const validId = value => typeof value === 'string' && uuid.test(value);
-  if (!data || !['mobile', 'desktop', 'unknown'].includes(device) || !validId(data.visitorId) || !validId(data.sessionId) ||
+  if (!data || !['mobile', 'desktop', 'unknown'].includes(device) ||
+      !['en', 'ru', 'unknown'].includes(language) || !validId(data.visitorId) || !validId(data.sessionId) ||
       !validTime(data.startedAt) || !integer(data.depth, 0, 10000) ||
       !(data.depthAtClick === null || integer(data.depthAtClick, 0, data.depth)) ||
       typeof data.moreSeen !== 'boolean' || !integer(data.activeMs, 0, now + idleMs - data.startedAt) ||
@@ -61,6 +63,7 @@ export async function onRequestPost({ request, env }) {
   }
 
   const db = env.ANALYTICS_DB;
+  const languageAvailable = (await db.prepare('PRAGMA table_info(visitors)').all()).results.some(column => column.name === 'language');
   await db.batch([
     db.prepare(`
       INSERT INTO visitors (id, first_at, source, device) VALUES (?, ?, ?, ?)
@@ -69,6 +72,9 @@ export async function onRequestPost({ request, env }) {
       WHERE excluded.first_at < visitors.first_at
         OR (excluded.first_at = visitors.first_at AND visitors.device = 'unknown')
     `).bind(data.visitorId, data.startedAt, data.source, device),
+    ...(languageAvailable ? [db.prepare(`
+      UPDATE visitors SET language = ? WHERE id = ? AND ? != 'unknown'
+    `).bind(language, data.visitorId, language)] : []),
     db.prepare(`
       INSERT INTO sessions (id, visitor_id, started_at, depth, depth_at_click, more_seen, active_ms, device)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)

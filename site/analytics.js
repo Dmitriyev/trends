@@ -100,7 +100,8 @@
     const events = pending.slice(0, 10);
     const body = JSON.stringify({
       visitorId, sessionId: session.id, startedAt: session.startedAt,
-      source: session.source, device, depth: session.seen.size, depthAtClick: session.depthAtClick,
+      source: session.source, device, language: document.documentElement.lang === 'ru' ? 'ru' : 'en',
+      depth: session.seen.size, depthAtClick: session.depthAtClick,
       moreSeen: session.moreSeen, activeMs: session.activeMs, events,
     });
     dirty = false;
@@ -226,6 +227,11 @@
   window.addEventListener('pagehide', () => {
     clearTimeout(playerTimer);
     tick();
+    flush(true);
+  });
+  document.addEventListener('trends:languagechange', () => {
+    interacted();
+    dirty = true;
     flush(true);
   });
   setInterval(() => { tick(); collectVisible(); }, 500);

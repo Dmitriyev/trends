@@ -1,0 +1,301 @@
+/* English is the default. Original creator captions stay in their source language. */
+(() => {
+  const translations = {
+  "Short Video Trends": "Тренды коротких видео",
+  "Trends": "Тренды",
+  "Sections": "Разделы",
+  "Previous example": "Предыдущий пример",
+  "Next example": "Следующий пример",
+  "Trend examples": "Примеры тренда",
+  "Views": "Просмотры",
+  "Plays": "Воспроизведения",
+  "Likes": "Лайки",
+  "Comments": "Комментарии",
+  "Shares": "Поделились",
+  "Saves": "Сохранения",
+  "Watch video": "Смотреть видео",
+  "Untitled": "Без названия",
+  "Video player": "Просмотр видео",
+  "Open original ↗": "Открыть на площадке ↗",
+  "Close player": "Закрыть плеер",
+  "Trend pages": "Страницы трендов",
+  "Video pages": "Страницы видео",
+  "Previous page": "Предыдущая страница",
+  "Next page": "Следующая страница",
+  "Page": "Страница",
+  "Language": "Язык",
+  "Bicep heart": "Сердце вокруг бицепса",
+  "Bend one arm and use both hands to make a heart around the bicep.": "Автор сгибает руку и замыкает кистями контур сердца вокруг бицепса.",
+  "Christmas tree reveal in one cut": "Наряженная ёлка появляется за одну склейку",
+  "Start with an empty corner or an undecorated tree. A gesture or quick cut reveals the fully decorated tree from the same angle.": "Сначала показывают пустой угол или ёлку без украшений. После жеста или короткой склейки с прежнего ракурса открывается уже наряженная ёлка.",
+  "My Moon, My Man: a couple comes together": "My Moon, My Man — сближение пары в одном кадре",
+  "With “my moon / my maaaaan” on screen, partners move toward each other in one short shot, ending with a hug, a kiss or a proposal.": "На экране надпись «my moon / my maaaaan». В одном коротком кадре партнёры тянутся друг к другу, а объятие, поцелуй или предложение становятся финалом.",
+  "Passing the phone to someone who…": "Передаю телефон тому, кто…",
+  "Film yourself, give a clue about the next person and pass the phone. The next person continues the chain.": "Участник снимает себя на фронтальную камеру, по характерной детали подсказывает, кто будет следующим, и передаёт телефон. Следующий продолжает цепочку.",
+  "Ranking everyday moments": "Бытовые мемы в нумерованном рейтинге",
+  "Short everyday scenes play in the center while a ranked list stays on the side. Each scene gets a name or a score as it appears.": "В центре сменяются короткие бытовые сценки, а сбоку остаётся список мест. По мере смены сценок в списке появляются их названия или оценки.",
+  "A prop hints at the transformation": "Подсказка в руках — затем превращение",
+  "Hold an object that hints at a character, then reveal the full costume and makeup on the beat.": "Автор держит предмет, намекающий на персонажа, и на удар музыки появляется в полном костюме и макияже.",
+  "Testing someone else’s viral hack": "Проверяю чужой вирусный лайфхак",
+  "Show the original viral clip, repeat its steps and compare the actual result.": "Сначала показывают исходный вирусный ролик, затем повторяют его действия и сравнивают настоящий результат.",
+  "Everyone takes a turn, then joins in": "Каждый выступает по очереди — затем все вместе",
+  "Each person steps into the center to perform their part before everyone comes together for the finale.": "Участники по очереди выходят в центр и исполняют свой кусок, а в конце собираются в одном кадре.",
+  "Halloween ends, Christmas starts": "Хеллоуин закончился — сразу Рождество",
+  "As soon as Halloween ends, the character pulls out a tree and starts preparing for Christmas.": "В момент окончания Хеллоуина герой мгновенно достаёт ёлку и начинает готовиться к Рождеству.",
+  "A solo dance turns into a group routine": "Танец начинается соло — остальные присоединяются",
+  "One person starts dancing. Others enter from different sides on the beat and join in sync.": "Один человек начинает в кадре, затем на удар музыки с разных сторон входят другие и продолжают синхронно.",
+  "A costume reveal from the feet up": "Костюм снизу вверх",
+  "Point the camera at the shoes, then tilt upward to reveal the full costume and face.": "Камеру сначала направляют на ноги и обувь, затем поднимают вверх и раскрывают полный костюм и лицо.",
+  "Makeup with a progress counter": "Макияж с процентом готовности",
+  "Build the makeup look in stages while a fixed on-screen counter climbs from zero to one hundred percent.": "Автор поэтапно меняет макияж, а счётчик в одном месте экрана растёт от нуля до ста процентов.",
+  "A hidden trap in the food": "Секретная ловушка в еде",
+  "Players secretly hide a trap among identical bites and take turns choosing until someone gets caught.": "Игроки тайком прячут ловушку среди одинаковых кусочков еды и по очереди выбирают их, пока кто-то не попадётся.",
+  "Secretly swapping the cups": "Незаметно поменять стаканы",
+  "One person prepares a surprise drink while the other tries to swap the cups. The ending reveals who falls for it.": "Двое сидят за столом: один подготавливает стакан с сюрпризом, второй пытается подменить стаканы, и финал показывает, кто попался.",
+  "Glasses reveal the real danger": "Надел очки — увидел настоящую опасность",
+  "A character overlooks a threat or thinks it is harmless. Putting on glasses reveals what it really is and triggers a reaction.": "Человек не замечает угрозу или считает её безобидной; после очков объект раскрывается, и следует реакция.",
+  "Turning a blanket into a cape": "Плед превращается в плащ",
+  "Tie the corners of a blanket to turn it into a hooded cape.": "Показывают, как завязать углы пледа и превратить его в накидку с капюшоном.",
+  "Pet ears move to the music": "Ушки питомца под музыку",
+  "Film a pet up close while gently moving its ears or paws to the song.": "Питомца снимают крупным планом, двигая его ушами или лапами в такт песне.",
+  "Switching makeup looks to the beat": "Обычный образ и готовый макияж меняются под бит",
+  "Alternate between an everyday look and finished makeup in time with a hand movement or musical accent.": "Кадр переключается между обычным и готовым образом в такт движению руки или музыкальному акценту.",
+  "Cover the camera, change the outfit": "Закрыл камеру — переоделся",
+  "Show the clothes, cover the lens with them and reveal the finished outfit after the transition.": "Автор показывает одежду, закрывает ею объектив и после перехода появляется уже в готовом образе.",
+  "Two makeup looks on one face": "Два варианта макияжа на одном лице",
+  "Apply different products or techniques to each half of the face and compare the results.": "На левую и правую половины лица наносят разные продукты или техники и сравнивают результат.",
+  "Dancing to on-screen icons": "Танец по значкам на экране",
+  "A row of icons appears at the top while the dancer performs the matching moves in sequence.": "Сверху появляется ряд значков, а участник по очереди показывает соответствующие движения.",
+  "The same situation at different ages": "Одна ситуация в разном возрасте или через разное время",
+  "Repeat a scene with an increasing number on screen to show how the reaction changes over time.": "Автор повторяет одну сцену с растущим числом на экране, показывая, как меняется реакция.",
+  "Deliberately strange makeup": "Нарочито странный макияж",
+  "Apply makeup in an exaggerated, unusual way, then reveal the final transformation.": "Автор наносит макияж преувеличенно необычным способом, а затем показывает итоговое превращение.",
+  "The finished shot and how it was made": "Финальный кадр и как его снимали",
+  "Compare a polished video with the behind-the-scenes setup and the actual filming technique on the same screen.": "На одном экране сравнивают эффектный готовый ролик с закулисьем и реальным способом его съёмки.",
+  "The loser runs while the winner eats": "Проиграл — беги, победитель ест",
+  "Two people play a quick game for food. The loser runs while the winner eats as much as possible.": "Двое играют в короткую игру за еду: проигравший бежит, пока победитель успевает съесть как можно больше.",
+  "Popcorn gives the middle finger": "Попкорн показывает средний палец",
+  "Pop corn kernels so the resulting popcorn resembles a middle-finger gesture.": "Кукурузные зёрна жарят так, чтобы получившийся попкорн напоминал жест со средним пальцем.",
+  "Eating with boxes on your arms": "Еда с коробками на руках",
+  "Wear long boxes over your arms, play a game and try to reach the food without bending your elbows.": "Участники надевают на руки длинные коробки, играют и пытаются дотянуться до еды прямыми руками.",
+  "Unboxing an imaginary folding phone": "Распаковка вымышленного складного телефона",
+  "Film a realistic unboxing of a concept smartphone and demonstrate how its screen folds.": "Авторы снимают реалистичную распаковку концепта смартфона и показывают, как складывается экран.",
+  "One ingredient, different durations": "Один продукт — разное время",
+  "Cook, soak or freeze the same ingredient for different lengths of time, then compare each result.": "Один продукт готовят, замачивают или замораживают разное время, затем сравнивают результат каждого этапа.",
+  "Taste each option and rate it": "Пробуют варианты и ставят оценки",
+  "Display a row of options, try each one and place a score over its icon.": "На экране ряд вариантов: автор пробует каждый и ставит оценку прямо поверх соответствующего значка.",
+  "Transforming into a reference image": "Превращение в картинку",
+  "Show a reference image, then recreate the look with makeup or a costume.": "В начале показывают изображение-референс, затем автор с помощью макияжа или костюма превращается в этот образ.",
+  "Sorting ratings into two columns": "Раскладываем оценки в две колонки",
+  "Rate each new item and move it into one of two on-screen columns.": "Каждый новый предмет оценивают и перетаскивают в одну из двух колонок на экране.",
+  "Dodging with a training move": "Уклонение движениями из тренировки",
+  "Reuse a move from a practice drill in a skit to dodge an outstretched hand.": "Движения из учебного упражнения повторяют в сценке, чтобы увернуться от протянутой руки.",
+  "One ingredient, different cooking methods": "Один продукт, разные способы приготовления",
+  "Cook the same ingredients in several ways and compare the taste or results in one video.": "Одни ингредиенты готовят разными способами и сравнивают вкус или результат в одном ролике.",
+  "Outfit changes under a ceiling fan": "Смена наряда под потолочным вентилятором",
+  "Lie in the same pose while overhead shots cut between different outfits.": "Герой лежит в одной позе, а склейки меняют одежду, пока камера смотрит сверху.",
+  "Turn around and move your hips": "Разворот спиной и движение бёдрами",
+  "On the beat, dancers turn away from the camera and start moving their hips in sync.": "На ударе музыки танцоры разворачиваются от камеры и синхронно начинают двигать бёдрами.",
+  "From a grumpy face to a cat-paw dance": "От недовольного лица к танцу с лапками",
+  "Stand with crossed arms, then suddenly start dancing with cat-paw gestures on the beat.": "Герой стоит со скрещёнными руками, а на музыкальном ударе резко начинает танцевать с жестами кошачьих лап.",
+  "Mixing foods to test a promised flavor": "Смешали продукты и проверили обещанный вкус",
+  "An emoji equation suggests a combination. Try it and compare the taste with the promised flavor.": "Уравнение из эмодзи задаёт комбинацию, затем автор пробует её и сравнивает вкус с обещанным.",
+  "Filling a cafeteria tray": "Наполняем поднос в столовой",
+  "A first-person camera picks up an empty tray and follows it as dishes are added.": "Камера от первого лица подхватывает пустой поднос, который постепенно наполняют блюдами.",
+  "A random number decides how much to eat": "Число на экране решает, сколько съесть",
+  "A random number generator determines how many pieces or bites each player gets.": "Генератор случайных чисел определяет, сколько кусочков или укусов достанется участнику.",
+  "A manicure reveal from closed fists": "Маникюр из сжатых кулаков",
+  "Keep both fists closed, then open them on the beat to reveal the finished nails.": "Автор держит кулаки закрытыми и раскрывает их под бит, показывая готовые ногти.",
+  "Finding makeup with a skin-tone filter": "Фильтр оттенка кожи в поиске макияжа",
+  "Record the screen while cycling through skin-tone swatches to show how the matching results change.": "На записи экрана перебирают образцы оттенков и показывают, как меняются результаты подбора.",
+  "An accidental pink mark becomes makeup": "Случайное розовое пятно становится макияжем",
+  "A brush seems to leave a bright mark by accident, then the creator turns it into a finished makeup look.": "Кисть будто случайно оставляет яркую метку, после чего автор превращает её в законченный макияж.",
+  "Squat down and turn into a pet or object": "Присел и превратился в предмет или питомца",
+  "Squat down and use a cut to replace the person with a small object or animal in the same spot.": "Герой опускается в приседе, и склейка подменяет его в том же месте маленьким предметом или животным.",
+  "Answering an outfit comment with a try-on": "На замечание об одежде отвечают примеркой",
+  "A comment about clothing sets the theme, followed by outfit changes to the music.": "Фраза об одежде задаёт тему, после неё автор меняет образы в такт музыке.",
+  "A Santa dispenser pranks the guests": "Дозатор с Сантой разыгрывает гостей",
+  "An unusual Christmas dispenser sets up a joke, and the camera stays on people’s reactions.": "Необычный рождественский дозатор запускает шутку, а камера задерживается на реакции людей.",
+  "A stick in swirling water": "Палочка в водовороте",
+  "A long stick moves through murky water while a participant hops along, keeping it in the center of the frame.": "Длинная палочка движется по мутной воде, а участник подпрыгивает следом, удерживая её в центре кадра.",
+  "Revealing a painting from the back": "Картина за обратной стороной холста",
+  "Hold a canvas with its back facing the camera, then turn it around to reveal the finished artwork.": "Холст держат изнанкой к камере и разворачивают, чтобы одним движением показать готовую работу.",
+  "A duo turns to face each other": "Танец от камеры лицом друг к другу",
+  "Two dancers start facing the camera, then turn toward each other and continue as a pair.": "Дуэт начинает танцевать в сторону камеры, затем поворачивается друг к другу и продолжает как пара.",
+  "A tablet blends into the room": "Планшет маскируется под часть комнаты",
+  "An image on a tablet blends into a nearby object until movement reveals the screen.": "Изображение на планшете сливается с окружающим предметом, а движение раскрывает, где был экран.",
+  "One cooking step, once versus a hundred times": "Кулинарное действие один раз и сто раз",
+  "Take the same ingredient, repeat a preparation step a different number of times and show the difference.": "Берут одинаковый продукт, повторяют один и тот же шаг разное число раз и показывают разницу.",
+  "The metronome before the first note": "Метроном перед первой нотой",
+  "A pianist sets a mechanical metronome and lets the viewer hear it tick before playing.": "Пианист выставляет темп механического метронома и даёт зрителю услышать тиканье перед игрой.",
+  "One-dish baked onion pasta": "Запечённая луковая паста в одной форме",
+  "Put the ingredients directly into a baking dish, then bake and mix the meal in the same dish.": "В начале ингредиенты сразу ссыпают в форму, в которой затем запекают и смешивают блюдо.",
+  "From shoulder sways to a leg lift": "Танец от покачивания плеч к подъёму ноги",
+  "Start with shoulder and arm movements, then switch to lifting a leg as the music changes.": "Танцоры начинают с движений плечами и руками, а затем по музыке переходят к подъёму ноги.",
+  "One drawing at different skill levels": "Один рисунок на разных уровнях мастерства",
+  "Draw the same subject several times, adding depth, shading and detail at each level.": "Один объект рисуют несколько раз, с каждым уровнем добавляя объём, тени и детали.",
+  "Finding a contest made for your weird talent": "Нашёл конкурс под свою странность",
+  "Spot a contest with a prize and turn an unusual skill into a chance to win.": "Герой видит конкурс с призом и использует своё необычное умение как шанс победить.",
+  "Two versions of one outfit on a split screen": "Две версии одного образа на разделённом экране",
+  "Keep a basic outfit on the left while a duplicate of the creator adds warm layers or accessories on the right.": "Слева остаётся базовый наряд, а справа двойник автора поэтапно добавляет тёплые слои или аксессуары.",
+  "Caught by your partner’s mom": "Застала мама партнёра",
+  "A character acts as if they are alone, then the next shot reveals that their partner’s mom saw everything.": "Герой делает что-то в расчёте на уединение, а следующий план раскрывает, что мама партнёра всё видела.",
+  "Teaching a move, then stealing the spotlight": "Показывает движение и перетягивает внимание",
+  "One person teaches another a move, then suddenly changes pose mid-turn and makes it a solo performance.": "Один участник учит другого движению. На повороте он резко меняет позу и превращает урок в сольный выход.",
+  "A paper doll tries on different heads": "Бумажная кукла примеряет головы",
+  "An overhead camera shows different paper heads being placed on the same paper body.": "Камера сверху показывает, как к одному бумажному телу подставляют разные варианты головы.",
+  "From black lines to Venom makeup": "От чёрных линий к гриму Венома",
+  "Draw rough black lines, then reveal the finished character makeup with a cut to the music.": "Автор наносит грубые чёрные линии, затем склейка под музыку раскрывает законченный грим.",
+  "Before and after a renovation, on the beat": "До и после ремонта под бит",
+  "An empty or outdated room changes into the finished interior on a musical accent.": "В момент удара музыки пустая или старая комната сменяется готовым интерьером.",
+  "Hiding your phone in the dark": "Как прячут телефон в темноте",
+  "The screen lights up the character’s face as they try to hide that they are using their phone.": "В темноте лицо выдаёт свет экрана, и герой пытается скрыть, что смотрит в телефон.",
+  "Pick your favorite; I pick you": "Выбери любимое, а я выберу тебя",
+  "A couple lays out objects for a choice game. One person answers by hugging their partner instead of choosing an item.": "Пара раскладывает вещи для игры с выбором. Один участник отвечает, обнимая партнёра вместо выбора предмета.",
+  "How to recreate an AI video": "Как повторить готовый ИИ-ролик",
+  "Show the finished effect, then recreate it step by step on a phone screen.": "Сначала показывают эффект в готовом ролике, затем пошагово собирают его на экране телефона.",
+  "An argument in the margins": "Перепалка на полях рисунка",
+  "Two people draw while trading short handwritten remarks in the empty space on the page.": "Два человека рисуют и ведут спор короткими рукописными репликами на свободном месте листа.",
+  "Cooking cuts to a saved recipe": "Готовка с переходом к сохранённому рецепту",
+  "Midway through cooking, switch to an app screen showing the saved recipe.": "На середине приготовления автор переключается на экран приложения, где показан сохранённый рецепт.",
+  "Two people change outfits on every cut": "Два человека, новые наряды на каждой склейке",
+  "Two people stay side by side and change their clothes together to the rhythm.": "Двое остаются рядом в кадре, одновременно меняя одежду под ритм.",
+  "A new look for every day": "Новый образ на каждый день",
+  "Outfits or hairstyles change in sequence, with captions showing the day of the week for each look.": "Наряды или причёски сменяют друг друга, а подписи показывают день недели каждого образа.",
+  "Escaping a bug, finding a ghost": "Побег от жука к привидению",
+  "A character climbs up to escape an insect, only to end up next to another source of fear.": "Герой в страхе от насекомого забирается повыше и оказывается рядом с другим источником страха.",
+  "Sauce in a takeaway drink cup": "Соус в стакане из-под напитка",
+  "Fill a large cup with sauce and dip the food almost or completely into it.": "Большой стакан наполняют соусом и погружают в него еду целиком или почти целиком.",
+  "Hair before and after cream": "Волосы до и после крема",
+  "After applying and rinsing out the product, run a comb through the hair to show the change.": "После нанесения средства и смывания автор проводит расчёской по волосам, чтобы показать перемену.",
+  "Transformations by rarity level": "Превращение по уровням редкости",
+  "Each cut reveals a new stage of makeup or costume as voice cues announce increasing rarity.": "Каждая склейка раскрывает новую ступень грима или костюма под голосовые сигналы о росте редкости.",
+  "Each round gets spicier": "Острота растёт от раунда к раунду",
+  "Try the same food with more hot sauce each round until reaching the hottest version.": "Одну и ту же еду пробуют со всё большей порцией острого соуса, пока не доходят до самой острой версии.",
+  "A new manicure on the same steering wheel": "Новый маникюр на том же руле",
+  "Frame the manicured hands, then cut to a new nail design in exactly the same position.": "Камеру фиксируют на руках с маникюром, затем склейка показывает новый дизайн в том же положении.",
+  "A pet pulls out a flower": "Питомец вытягивает из морды цветок",
+  "A pet tugs a stem with its paw, and a whole flower appears from its nose or mouth.": "Питомец тянет лапой за стебель, и из носа или рта появляется целый цветок.",
+  "The camera rides the train, the creator runs": "Камера на вагоне, автор бежит по платформе",
+  "Place a phone by the train window, then run alongside the departing train while it films the movement.": "Автор закрепляет телефон у окна, а после отправления поезда бежит рядом, пока камера снимает движение.",
+  "Turning toward a crowd on the stairs": "Герой разворачивается к толпе на ступенях",
+  "The main character turns around and walks toward a group lined up behind them on a staircase.": "Герой поворачивается и идёт в сторону группы, выстроенной позади него на лестнице.",
+  "Tie hair in front, flip it back": "Связать волосы спереди и перекинуть назад",
+  "Tie the hair in front of the face, then flip it over the head to reveal the finished hairstyle.": "Волосы соединяют перед лицом, а затем перебрасывают через голову, раскрывая готовую причёску.",
+  "Make a wish, break a stick": "Загадал желание и сломал палочку",
+  "Say a wish, break a stick and use the next action to show the wish coming true.": "Герой произносит желание, ломает палочку, и следующим действием показывает исполнение.",
+  "Animals run a café": "Звери держат кафе",
+  "In an AI video, an animal takes the role of a café worker and prepares food behind the counter.": "В ИИ-ролике животное берёт на себя роль работника кафе и готовит блюдо за стойкой.",
+  "How a child takes over the bed": "Как ребёнок вытесняет родителей с кровати",
+  "During the night, a child gradually takes up more space until the parents can barely fit.": "Ночью ребёнок постепенно занимает всё больше места, пока родители едва умещаются.",
+  "Making a squishy and testing the squeeze": "Сделали мягкую игрушку и проверили, как мнётся",
+  "First assemble a homemade squishy toy, then squeeze the finished toy in a close-up.": "В ролике сначала собирают самодельный сквиши, а затем крупным планом сжимают готовую игрушку.",
+  "An AI-planned vacation": "Маршрут отпуска составил ИИ",
+  "Let AI plan a trip or a day in a city, then show what happens while following its itinerary.": "Автор отдаёт планирование поездки или дня в городе ИИ и показывает, как проходит маршрут по его указаниям.",
+  "An Ajas roast battle": "Батл Ajas с подколами",
+  "Participants take turns delivering short jokes at each other’s expense while the camera captures the reactions.": "Участники по очереди бросают друг другу короткие подколы, а камера показывает реакцию на ответ.",
+  "Cooking on a fixed budget": "Готовим на заданный бюджет",
+  "Choose ingredients within a set budget and show the meal they can make.": "Игрок подбирает продукты в пределах бюджета и показывает, какое блюдо удалось собрать.",
+  "A skit made from paper drawings": "Сценка из бумажных рисунков",
+  "An overhead camera films hands moving illustrated paper pieces to act out a scene.": "Камера смотрит сверху, пока руки двигают нарисованные бумажные детали и разыгрывают сцену.",
+  "Your old style versus your look today": "Прежний стиль и сегодняшний образ",
+  "Start with old photos, then reveal how the person dresses now.": "Сначала показывают старые фотографии, затем раскрывают, как герой одевается сейчас.",
+  "A collection of striking 3D prints": "Подборка эффектных 3D-печатных вещей",
+  "Show different printed models and their details in a series of short shots.": "В коротких последовательных сценах показывают разные напечатанные модели и их детали.",
+  "An absurd question for a voice AI": "Абсурдный вопрос голосовому ИИ",
+  "Ask a voice assistant a ridiculous question and make its response the punchline.": "Герой задаёт нелепый вопрос голосовому ассистенту, и ответ системы становится кульминацией.",
+  "Numbers above the characters’ heads": "Цифры над головами персонажей",
+  "In an animation, numbers appear above characters to mark their status and drive the story.": "В анимации у героев появляются числа, которые обозначают их статус и определяют ход истории.",
+  "Pairs take turns, the whole group finishes": "Танец парами, финал всей группой",
+  "Each pair steps forward in turn, then everyone dances together for the final section.": "Пары по очереди выходят вперёд, а последний фрагмент танцуют все вместе.",
+  "Naming friends to the beat": "Называем друзей в такт",
+  "Two people name friends according to the game’s rules, timing each answer to the music.": "Двое называют знакомых по правилам игры, а ответы должны попадать в музыкальный ритм.",
+  "Sorry I Lied: one sound, different videos": "Sorry I lied — ролики под общий звук",
+  "This Generation: a dance to a shared sound": "This Generation — танец под общий звук",
+  "Wassup: dancers take turns in front": "Wassup — танцоры по очереди выходят к камере",
+  "To Wassup, dancers step forward in turn while the others keep the rhythm in the back. Everyone then forms a line for a shared accent before splitting up again.": "Под Wassup танцоры по очереди выходят вперёд, остальные держат ритм сзади. Затем все собираются в ряд на общий акцент и снова расходятся."
+};
+  const root = document.getElementById('trend-apify');
+  const storageKey = 'trends.language';
+  const textSources = new WeakMap();
+  const attributeSources = new WeakMap();
+  const metaSources = new WeakMap();
+  const reverse = Object.fromEntries(Object.entries(translations).map(([en, ru]) => [ru, en]));
+  const prefixes = ['Watch video', 'Views', 'Plays', 'Likes', 'Comments', 'Shares', 'Saves', 'Video pages', 'Page'];
+  let language = 'en';
+  try {
+    const saved = localStorage.getItem(storageKey);
+    if (saved === 'en' || saved === 'ru') language = saved;
+  } catch (_) { /* Storage may be disabled; the switch still works. */ }
+  // The cookie shares the preference with the server-rendered analytics page.
+  const cookie = document.cookie.match(/(?:^|;\s*)trends_language=(en|ru)(?:;|$)/)?.[1];
+  if (cookie) language = cookie;
+
+  function translate(value) {
+    const english = Object.hasOwn(reverse, value) ? reverse[value] : value;
+    if (language === 'en') return english;
+    if (Object.hasOwn(translations, english)) return translations[english];
+    for (const prefix of prefixes) {
+      if (english.startsWith(prefix + ': ') || english.startsWith(prefix + ' —') || english.startsWith(prefix + ' ')) {
+        return translations[prefix] + english.slice(prefix.length);
+      }
+    }
+    return value;
+  }
+
+  function applyLanguage(next, persist = false) {
+    language = next === 'ru' ? 'ru' : 'en';
+    document.documentElement.lang = language;
+    document.title = translate('Short Video Trends');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.parentElement.closest('script, style, .meta, dd')) continue;
+      if (!textSources.has(node)) textSources.set(node, node.nodeValue);
+      node.nodeValue = translate(textSources.get(node));
+    }
+    for (const element of root.querySelectorAll('[aria-label], [title], img[alt]')) {
+      let originals = attributeSources.get(element);
+      if (!originals) {
+        originals = {};
+        for (const name of ['aria-label', 'title', 'alt']) {
+          if (element.hasAttribute(name)) originals[name] = element.getAttribute(name);
+        }
+        attributeSources.set(element, originals);
+      }
+      for (const [name, value] of Object.entries(originals)) element.setAttribute(name, translate(value));
+    }
+    const months = language === 'ru'
+      ? ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек']
+      : ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (const meta of root.querySelectorAll('.meta')) {
+      if (!metaSources.has(meta)) metaSources.set(meta, meta.textContent);
+      meta.textContent = metaSources.get(meta).replace(/(\d{4})-(\d{2})-(\d{2})/g, (date, year, month, day) => {
+        return months[Number(month)-1] ? `${day} ${months[Number(month)-1]}, ${year}` : date;
+      });
+    }
+    const numbers = new Intl.NumberFormat(language === 'ru' ? 'ru-RU' : 'en-US', { maximumFractionDigits: 1 });
+    for (const metric of root.querySelectorAll('dl > div')) {
+      const full = metric.querySelector('dd .metric-label');
+      const compact = metric.querySelector('dd [aria-hidden]');
+      if (!full || !compact) continue;
+      const count = Number(full.textContent.replace(/\s/g, ''));
+      if (!Number.isFinite(count)) continue;
+      compact.textContent = count >= 1e6 ? numbers.format(count / 1e6) + (language === 'ru' ? 'М' : 'M')
+        : count >= 1e3 ? numbers.format(count / 1e3) + (language === 'ru' ? 'К' : 'K') : String(count);
+    }
+    for (const button of root.querySelectorAll('[data-language]')) {
+      button.setAttribute('aria-pressed', String(button.dataset.language === language));
+    }
+    if (persist) {
+      try { localStorage.setItem(storageKey, language); } catch (_) {}
+      document.cookie = `trends_language=${language}; Path=/; Max-Age=31536000; SameSite=Lax`;
+      document.dispatchEvent(new Event('trends:languagechange'));
+    }
+  }
+  for (const button of root.querySelectorAll('[data-language]')) {
+    button.addEventListener('click', () => applyLanguage(button.dataset.language, true));
+  }
+  applyLanguage(language);
+
+})();

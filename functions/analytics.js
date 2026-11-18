@@ -203,7 +203,25 @@ export async function onRequestGet({ request, env }) {
         AND ${deviceFilter('sessions.device')}
       GROUP BY day, tab ORDER BY day DESC, tab
     `).bind(cutoff, device, device).all();
+    const languageAvailable = (await db.prepare('PRAGMA table_info(visitors)').all()).results.some(column => column.name === 'language');
+    const languageRows = languageAvailable ? await db.prepare(`
+      SELECT visitors.language, count(DISTINCT visitors.id) AS users,
+        count(*) AS sessions,
+        count(DISTINCT CASE WHEN visitors.first_at >= ? THEN visitors.id END) AS new_users
+      FROM sessions JOIN visitors ON visitors.id = sessions.visitor_id
+      WHERE sessions.started_at >= ? AND ${deviceFilter('sessions.device')}
+      GROUP BY visitors.language
+    `).bind(cutoff, cutoff, device, device).all() : { results: [] };
+    const languageTotal = languageRows.results.reduce((sum, row) => sum + row.users, 0);
+    const languages = new Map(languageRows.results.map(row => [row.language, row]));
     content = `<div class="range">${rangeLinks}</div>` +
+      (languageAvailable ? table('Пользователи по языку интерфейса', ['Язык', 'Пользователи (браузеры)', 'Доля', 'Новые браузеры', 'Сессии'],
+        ['ru', 'en', 'unknown'].map(language => {
+          const row = languages.get(language) || { users: 0, new_users: 0, sessions: 0 };
+          return [language === 'unknown' ? 'Не определён' : language.toUpperCase(),
+            row.users, percent(row.users, languageTotal), row.new_users, row.sessions];
+        })) : '<p>Для разбивки RU / EN примените миграцию 0003_visitor_language.sql. Остальная аналитика работает.</p>') +
+      '<p>За выбранный период, с учётом фильтра устройства. Язык — последний зафиксированный выбор в интерфейсе. Один браузер относится к одной языковой группе. Старые записи без данных о языке показаны отдельно.</p>' +
       table('Лента по дням', ['Дата', 'Новые браузеры', 'Сессии', 'Карточек до перехода между страницами · медиана / P75',
         'Увидели пагинацию', 'Перешли из увидевших', 'Открытия плеера ≥3 с', 'Активное время · медиана / P75'],
       [...daily].map(([date, row]) => [date, row.visitors, row.sessions ?? 0,

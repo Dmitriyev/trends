@@ -1,5 +1,18 @@
 {
   "version": 1,
-  "include": ["/", "/index.html", "/analytics", "/api/analytics"],
+  "include": [
+    "/",
+    "/index.html",
+    "/tiktok",
+    "/tiktok/*",
+    "/instagram",
+    "/instagram/*",
+    "/youtube",
+    "/youtube/*",
+    "/ru",
+    "/ru/*",
+    "/analytics",
+    "/api/analytics"
+  ],
   "exclude": []
 }

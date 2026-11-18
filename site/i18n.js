@@ -230,6 +230,8 @@
   // The cookie shares the preference with the server-rendered analytics page.
   const cookie = document.cookie.match(/(?:^|;\s*)trends_language=(en|ru)(?:;|$)/)?.[1];
   if (cookie) language = cookie;
+  // Explicit page URLs always determine the language, including shared links.
+  language = location.pathname.startsWith('/ru/') || location.pathname === '/ru' ? 'ru' : 'en';
 
   function translate(value) {
     const english = Object.hasOwn(reverse, value) ? reverse[value] : value;
@@ -246,7 +248,7 @@
   function applyLanguage(next, persist = false) {
     language = next === 'ru' ? 'ru' : 'en';
     document.documentElement.lang = language;
-    document.title = translate('Short Video Trends');
+    // The server supplies a distinct title for each platform and language.
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     while (walker.nextNode()) {
       const node = walker.currentNode;
@@ -285,7 +287,10 @@
         : count >= 1e3 ? numbers.format(count / 1e3) + (language === 'ru' ? 'К' : 'K') : String(count);
     }
     for (const button of root.querySelectorAll('[data-language]')) {
-      button.setAttribute('aria-pressed', String(button.dataset.language === language));
+      const selected = button.dataset.language === language;
+      button.setAttribute('aria-pressed', String(selected));
+      if (selected) button.setAttribute('aria-current', 'true');
+      else button.removeAttribute('aria-current');
     }
     if (persist) {
       try { localStorage.setItem(storageKey, language); } catch (_) {}
@@ -296,6 +301,8 @@
   for (const button of root.querySelectorAll('[data-language]')) {
     button.addEventListener('click', () => applyLanguage(button.dataset.language, true));
   }
-  applyLanguage(language);
+  // Remember the language chosen by opening a language-specific URL too.
+  applyLanguage(language, true);
 
 })();
+

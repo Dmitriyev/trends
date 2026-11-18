@@ -1,5 +1,6 @@
 import { sections, pagePath, resolvePage } from './_lib/pages.js';
 import { englishCopy, renderEnglishCopy } from './_lib/english-copy.js';
+import { russianCopy, renderRussianCopy } from './_lib/russian-copy.js';
 import translations from './_lib/translations.js';
 
 export async function onRequest({ request, next, env }) {
@@ -45,14 +46,15 @@ export async function onRequest({ request, next, env }) {
       if (language === page.language) element.setAttribute('aria-current', 'true');
       else element.removeAttribute('aria-current');
     } });
-  if (page.language === 'en') {
-    const copy = renderEnglishCopy(page.section);
+  {
+    const source = page.language === 'ru' ? russianCopy : englishCopy;
+    const copy = page.language === 'ru' ? renderRussianCopy(page.section) : renderEnglishCopy(page.section);
     rewriter.on('header', { element(header) { header.after(copy.intro, { html: true }); } });
     // Pagination is appended inside each feed panel; details follow all panels.
     rewriter.on('main', { element(main) { main.append(copy.details, { html: true }); } });
     rewriter.on('head', { element(head) {
       head.append('<link rel="stylesheet" href="/seo-content.css">' +
-        `<meta name="description" content="${escape(englishCopy[page.section].intro)}">`, { html: true });
+        `<meta name="description" content="${escape(source[page.section].intro)}">`, { html: true });
     } });
   }
   if (page.language === 'ru') {

@@ -31,10 +31,13 @@ export const englishCopy = {
 
 const escapeHTML = value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 export function renderEnglishCopy(section) {
-  const copy = englishCopy[section];
+  return renderPageCopy(englishCopy[section], 'About this collection');
+}
+
+export function renderPageCopy(copy, label) {
   return {
     intro: `<p class="page-intro">${escapeHTML(copy.intro)}</p>`,
-    details: '<section class="page-details" aria-label="About this collection">' + copy.blocks.map(([heading, text]) =>
+    details: `<section class="page-details" aria-label="${escapeHTML(label)}">` + copy.blocks.map(([heading, text]) =>
       `<section><h2>${escapeHTML(heading)}</h2><p>${escapeHTML(text)}</p></section>`).join('') + '</section>',
   };
 }

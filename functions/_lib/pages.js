@@ -1,8 +1,8 @@
 export const sections = {
-  trends: { slug: '', en: 'Short Video Trends', ru: 'Тренды коротких видео' },
-  tiktok: { slug: 'tiktok', en: 'TikTok Trends', ru: 'Тренды TikTok' },
-  reels: { slug: 'instagram', en: 'Instagram Reels Trends', ru: 'Тренды Instagram Reels' },
-  shorts: { slug: 'youtube', en: 'YouTube Shorts Trends', ru: 'Тренды YouTube Shorts' },
+  trends: { slug: '', en: 'Short-Form Video Trends', ru: 'Тренды коротких видео' },
+  tiktok: { slug: 'tiktok', en: 'Explore Trends on TikTok', ru: 'Тренды TikTok' },
+  reels: { slug: 'instagram', en: 'Explore Reels Trends on Instagram', ru: 'Тренды Instagram Reels' },
+  shorts: { slug: 'youtube', en: 'Explore Shorts Trends on YouTube', ru: 'Тренды YouTube Shorts' },
 };
 export function pagePath(section, language) {
   return (language === 'ru' ? '/ru/' : '/') + (sections[section].slug ? sections[section].slug + '/' : '');

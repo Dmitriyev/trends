@@ -25,3 +25,23 @@ test('server and browser translation dictionaries stay identical', () => {
   const dictionary = source.match(/const translations = (\{[\s\S]*?\n\});/)[1];
   assert.deepEqual(JSON.parse(dictionary), translations);
 });
+
+test('sitemap lists every canonical locale URL exactly once', () => {
+  const source = readFileSync(new URL('../site/sitemap.xml', import.meta.url), 'utf8');
+  const urls = Array.from(source.matchAll(/<loc>([^<]+)<\/loc>/g), match => match[1]);
+  const expected = Object.keys(sections).flatMap(section =>
+    ['en', 'ru'].map(language => 'https://trendscanner.app' + pagePath(section, language)),
+  );
+  assert.deepEqual(urls.sort(), expected.sort());
+});
+
+test('static crawler files stay outside Functions; Pages has a 404 fallback', () => {
+  const robots = readFileSync(new URL('../site/robots.txt', import.meta.url), 'utf8');
+  assert.match(robots, /^Sitemap: https:\/\/trendscanner\.app\/sitemap\.xml$/m);
+  const routes = JSON.parse(readFileSync(new URL('../site/_routes.json', import.meta.url), 'utf8'));
+  for (const path of ['/robots.txt', '/sitemap.xml']) {
+    assert.equal(routes.include.some(pattern => pattern.endsWith('*') ?
+      path.startsWith(pattern.slice(0, -1)) : path === pattern), false);
+  }
+  assert.match(readFileSync(new URL('../site/404.html', import.meta.url), 'utf8'), /<h1>Page not found<\/h1>/);
+});
